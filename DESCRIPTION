@@ -1,0 +1,46 @@
+Package: HT12ProcessoR
+Type: Package
+Title: Preprocessing Illuminas HT12 v4 data
+Version: 0.0.4
+Date: 2017-07-02
+Author: Holger Kirsten and Carl Beuchel
+Maintainer: Holger Kirsten<holger.kirsten@imise.uni-leipzig.de>
+Description: Preprocessing ILLUMINA HT12v4 data intented for project up to thousands of samples
+License: GPL (>= 2)
+Imports:
+    knitr,
+    dplyr,
+    plyr,
+    ggrepel,
+    MatrixEQTL,
+    fdrtool,
+    sva,
+	scales,
+    WriteXLS,
+    rgl,
+    MASS,
+    lattice,
+    affyPLM,
+    lumi,
+    lumiHumanIDMapping,
+    gridExtra,
+    vsn,
+    xtable,
+    threejs,
+    DT,
+    ggplot2,
+    stringr,
+    pander,
+    reshape2,
+    readxl,
+    bit64,
+    mdqc,
+    Biobase
+Suggests:
+    knitr,
+    rmarkdown
+Depends:
+    data.table
+VignetteBuilder: knitr
+LazyData: true
+RoxygenNote: 6.0.1
