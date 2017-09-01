@@ -5,8 +5,10 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
  
  
@@ -25,7 +27,8 @@ require(knitr)
 require(pander)
 panderOptions('table.split.table', Inf)
 
-require(HT12ProcessoR) 
+
+ require(HT12ProcessoR)  
 
 
 knitr::opts_chunk$set(cache = FALSE, results = "markup", echo=T , fig.width = 9, fig.height = 6, eval = TRUE)
