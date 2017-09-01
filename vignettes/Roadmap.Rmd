@@ -93,7 +93,12 @@ Project-specific parameters that should be customized initially are
 myparams[ myparams$variable == "file_names_of_files_and_folders", "value"] = input_filename
 myparams[ myparams$variable == "datafolder_results", "value"] = paste0(prepro_folder, "/tosent/")
 
-myparams[ myparams$variable == "file_renaming_samples_tosent", "value"] = paste0(prepro_folder, "/tosent/")
+#in Case all samples have spiked-in ERCC controls
+#myparams[ myparams$variable == "excludeERCC", "value"] = FALSE
+#myparams[ myparams$variable == "controlparameters2check", "value"] = "hybrid_low, hybrid_med,  string_pm, string_mm, biotin, negative, ercc_1, ercc_2, ercc_3, ercc_4, ercc_5"
+
+## if removeBatchEffects() does not work, this might be due to to strongly correlated controlparameters2check
+#myparams[ myparams$variable == "controlparameters2check", "value"] = "hybrid_low, hybrid_med,  string_pm, string_mm, biotin, negative, ercc_1,  ercc_3, ercc_4, ercc_5"
 
 
 myparamfile = paste0(prepro_folder, "/input_parameter_010.txt")
@@ -162,8 +167,12 @@ xtabs(~prepro_ht12$chipsamples$strangebatch + prepro_ht12$chipsamples$processing
 ## Quick Check for major differences based on Attributes from the provided ILLUMINA-sample-files
 initial_pca = calcInitialPCA(prepro_ht12)
 
-p1 = ggplot(initial_pca$scores, aes(Comp.1, Comp.2, pch = subgroup , col = processingbatch , size = Detected.Genes..0.01., alpha = in_study)) + geom_point() + scale_alpha_manual(values = c(0.7, 0.3))
+p1 = ggplot(initial_pca$scores, aes(PC1, PC2, pch = subgroup , col = processingbatch , size = Detected.Genes..0.01., alpha = in_study, label = paste(old_ID, new_ID, sep = "\n"))) + geom_point() + scale_alpha_manual(values = c(0.7, 0.3))
 p1
+
+## interactive visualisation 
+require(plotly)
+p1 %>% ggplotly()
 
 ```
 
