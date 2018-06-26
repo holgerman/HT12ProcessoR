@@ -1,0 +1,22 @@
+20180621 TODOs for package competion:
+
+### Test-Run with example data ###
+
+* make Vignette available via browseVignettes()
+* inst/ folder not available after installation, neither is the vignettes folder
+* what are the meaning of fileset_id etc?
+* sample_f description wrong
+* input_parameter_010.txt contains GenStat specific folder as parameter (will be changed manually anyway?)
+* panderOptions without pander loaded
+* descirption of input files
+* STEP1 description -> which parameter deals with identical IDs
+* step2, why change tissue from all to pbmc?
+* step2, what does the xtabs step tell me?
+* initial PCA interpretation?
+* step3: what is ERCC?
+* step3 file exploration? what do I see there?
+
+### Package ###
+
+* Vignette doesn't load -> create new vignette via devtools
+* exclude imise-specific initiate step from vignette (formulate generic package loading etc)
