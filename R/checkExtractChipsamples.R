@@ -1,5 +1,5 @@
 #' @title Check Illumina HT12v4 expression data
-#' @description This function checks the data and extracts the sample-IDs including information from Illuminas sample-files. See vignette for an example. 
+#' @description This function checks the data and extracts the sample-IDs including information from Illuminas sample-files. See vignette for an example.
 #' @param paramfile Path to the file specifying preprocessing parameters, can be NULL
 #' @param file_names_of_files_and_folders Path to a tab-delimeted file with information of files created in Illuminas Genome Studio.  Following columns are required:   `fileset_id`: a short ID for a fileset,  `con_f`: full path and filename of the control probe data file,  `nobkgd_f`: full path and filename of the gene probe data file,  `sample_f`: full path and filename of the control probe data file. If NULL, information is used from parameterfile specified in 'paramfile', Default: 'from_paramfile'
 #' @param colseparator Separator splitting numbers into units of 1000. Typically "." or  ",". Default: 'from_paramfile'
@@ -22,9 +22,9 @@ checkExtractChipsamples = function(paramfile = NULL, file_names_of_files_and_fol
 
 ### strings are imported as strings and not as factors
   options(stringsAsFactors=FALSE)
-  
+
   myparameters = match.call()
-  
+
 ## ----addfunct------------------------------------------------------------
 showVennplots = F
 
@@ -257,10 +257,10 @@ if(max(as.numeric(names(table(check))) > 3)) {
   message(paste0("betrifft \n", length(names(mehrfach_probes)), " von ", length(unique(sample_overview$samples)), " Proben"))
   message("\n\n")
   # print(sample_overview[ sample_overview$samples %in% names(mehrfach_probes),])
- 
-  
+
+
   if(renameDublettes== "from_paramfile") param2 = getParam2("renameDublettes", myparam = param) else param2 = renameDublettes
-  
+
   if(param2 == "F" | param2 == "FALSE") stop("Found samples with duplicated name. As parameter 'renameDublettes'==F , stopping here. Consider setting parameter renameDublettes to TRUE)")
   if(param2 == "T" | param2 == "TRUE") {
     if(any(ceiling(sample_overview$samplename_count) != sample_overview$samplename_count)) stop("manche proben kommen nicht in allen files nobkgd, con und sample vor")
@@ -497,14 +497,19 @@ status04_missingilmnCons = ifelse(length(checkall_condrinn)!= 1,
 # gleiche Ids
 sample_overview_l$Sample.IDclean = stringr::str_trim(sample_overview_l$Sample.ID) # oben, in funktion getIDsFromKnutSamplefiles wird ein warning generiert fuer diesen fall
 sample_overview_l$old_ID.IDclean = stringr::str_trim(sample_overview_l$old_ID) # oben, in funktion  getIDsFromKnutSamplefiles wird ein warning generiert fuer diesen fall
-checkedIDs = apply(sample_overview_l[, c('old_ID.IDclean', "Sample.IDclean", "Sample_ID")], 1,function (x) length(na.omit(unique(x))) >1)
+checkedIDs = apply(sample_overview_l[, c('old_ID.IDclean', "Sample.IDclean", "Sample_ID")], 1,function (x) length(na.omit(unique(stringr::str_trim(x)))) >1)
 check = sample_overview_l[checkedIDs,c(  'old_ID.IDclean', "Sample.IDclean", "Sample_ID")]
 check
 checkdetail = sample_overview_l[checkedIDs,]
 status05checkedIDsConsistency = ifelse(nrow(check) != 0,('Problem found: Different IDs for identical samples used within columns "Sample.ID", "Sample_ID", and rownames of Expressionfiles. Please clarify reasons!'),('No different IDs for identical samples used within columns "Sample.ID", "Sample_ID", and rownames of Expressionfiles, no problem identified.\n'))
+status05checkedIDsConsistency_data = check
 if(nrow(check) != 0) warning(status05checkedIDsConsistency) else message(status05checkedIDsConsistency)
 sample_overview_l$Sample.IDclean = NULL
 sample_overview_l$old_ID.IDclean = NULL
+
+## add on 25.6.18 old ID darf trailing leerzeichen haben, wird implizit ignoriert durch str_trim. Die trailing spacesim expression file scheinen ohnehin ignoriert zu werden,also sogar notwendig, wenn einheitlich trailing spaces vergeben wurden
+sample_overview_l$old_ID = stringr::str_trim(sample_overview_l$old_ID)
+
 
 ## ----releva--------------------------------------------------------------
 names(sample_overview_l)[names(sample_overview_l) == "samples"] = "new_ID"
@@ -543,7 +548,8 @@ res = vector(mode = "list", length = 1)
 class(res) = unique(c(class(res), "HT12prepro"))
 
 res$chipsamples = sample_overview_l2
-res$dokuobjects_checkExtractChipsamples = list(missing_ilmns, missing_ilmnCons,missingilmns_det,sample_overview_l2, check_haeufigkeitSentrixIDs, alle_statusse)
+res$dokuobjects_checkExtractChipsamples = list(missing_ilmns, missing_ilmnCons,missingilmns_det,sample_overview_l2, check_haeufigkeitSentrixIDs, mget(alle_statusse))
+names(res$dokuobjects_checkExtractChipsamples)  = c('missing_ilmns', 'missing_ilmnCons','missingilmns_det','sample_overview_l2', 'check_haeufigkeitSentrixIDs', 'alle_statusse')
 res$history = data.frame(calls = paste(Sys.time(), deparse(myparameters)))
 return(res)
 

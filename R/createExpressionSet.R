@@ -1,10 +1,10 @@
-#' Create an expressionset from Illumina HT12v4 data 
+#' Create an expressionset from Illumina HT12v4 data
 #'
-#' @description This function loads the expression data from several text files created by Illumina GenomeStudio. These files are specified via the slot $chipsamples of an HT12prepro-object from columns "fileset_id", "nobkgd_f", "con_f",and "sample_f". See vignette for an example. 
+#' @description This function loads the expression data from several text files created by Illumina GenomeStudio. These files are specified via the slot $chipsamples of an HT12prepro-object from columns "fileset_id", "nobkgd_f", "con_f",and "sample_f". See vignette for an example.
 #' @param ht12object A list object of class HT12prepro created with function checkExtractChipsamples()
 #' @param paramfile Path to the file specifying parameters
 #' @param colseparator Separator splitting numbers into units of 1000. Typically "." or  ",". If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.
-#' @return A list object of class HT12prepro with a slot with updated  sample-related attributes of the current processing-stage named `$chipsamples`, a slot with the R-object holding expression data used to create the expression set named `$rawdataWOcons_joined`, a slot with the R-object holding control data used to create the expression set named `$rawdataOnlycons_joined`, a slot with the R-object holding control data used to create the expression set named `$rawdataOnlycons_joined`, a slot with expression-set expression data excluding control data named `$all_nobkgd_eset`, a slot with expression-set expression data including control data named `$total_nobkgd_eset`, a slot with the history of the commands named `$history`including expressionset slots   
+#' @return A list object of class HT12prepro with a slot with updated  sample-related attributes of the current processing-stage named `$chipsamples`, a slot with the R-object holding expression data used to create the expression set named `$rawdataWOcons_joined`, a slot with the R-object holding control data used to create the expression set named `$rawdataOnlycons_joined`, a slot with the R-object holding control data used to create the expression set named `$rawdataOnlycons_joined`, a slot with expression-set expression data excluding control data named `$all_nobkgd_eset`, a slot with expression-set expression data including control data named `$total_nobkgd_eset`, a slot with the history of the commands named `$history`including expressionset slots
 #' @import data.table
 #' @export
 
@@ -17,7 +17,7 @@
 createExpressionSet = function(ht12object,paramfile = NULL, colseparator= "from_paramfile") {
 ### strings are imported as strings and not as factors
 options(stringsAsFactors=FALSE)
-  
+
 myparameters = match.call()
 showVennplots = F
 
@@ -28,7 +28,7 @@ if(any(grepl("checkExtractChipsamples", historie))==F) stop("Function 'checkExtr
 #laden parameter
 if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
 
-laengeilmn = dim(allilmn)[1] 
+laengeilmn = dim(allilmn)[1]
 if(laengeilmn != 47323) stop("47323 ilmn-IDs aus file 'data/all47323ilmn.rda' wurden nicht richtig geladen")
 
 sample_overview_l3_initial = ht12object$chipsamples
@@ -51,7 +51,7 @@ showClassDF(filestable)
 id_overview <- c()
 
 #liste aller vorhandenen ilmns einlesen
-all_nobkgd <- data.table( allilmn)  
+all_nobkgd <- data.table( allilmn)
 setnames(all_nobkgd, "ilmn", "PROBE_ID")
 
 if(colseparator== "from_paramfile") colseparator_used = getParam2("colseparator", myparam = param) else colseparator_used = colseparator
@@ -62,10 +62,10 @@ for(i in 1:length(filestable[,1])){
   #     i = 1
   #alles laden
   message("Import file ",i,  ": " ,filestable$nobkgd_f[i], "...\n")
-  nobkgd <- suppressWarnings(data.table::fread(paste(filestable$nobkgd_f[i], sep="/" ), ))
+  nobkgd <- suppressWarnings(data.table::fread(paste(filestable$nobkgd_f[i], sep="/" )))
   names(nobkgd)
   ht(nobkgd,1)
-  
+
   #expressiosn spalten reduzieren auf ids im table
   #die IDs, von denen ich daten importieren will
   samples_in <- as.character(sample_overview_l3[as.character(sample_overview_l3$nobkgd_f) ==
@@ -74,26 +74,26 @@ for(i in 1:length(filestable[,1])){
   if(length(samples_in)==0) stop("keine IDs zu importieren - checke skript!")
   check = table(table(unique(samples_in)))
   check
-  if(identical(names(check),  "1")==F) stop("mehrdeutige IDs im table!")    
+  if(identical(names(check),  "1")==F) stop("mehrdeutige IDs im table!")
   if(length(setdiff(c("PROBE_ID"), names(nobkgd)) != 0)) stop(' "PROBE_ID" nicht gegeben - skript modifizieren')
-  
+
   #bezugdatenframe zum umbennenen der IDs bauen
   spalten <- data.frame(old_colname=names(nobkgd))
   spalten$originalid_from_colname <- sapply(stringr::str_split(as.character(spalten$old_colname), "\\.AVG_Signal|\\.Detection.Pval"), "[", 1)
-  
+
   # spalten$id_from_colname <- as.character(stringr::str_replace(spalten$originalid_from_colname, "^X", ""))
   spalten$id_from_colname <- as.character(spalten$originalid_from_colname)
-  
+
   #zur ueberpruefung modifiziere ich die zu importierenden ids laut uebersichtstabelle so, dass ich die importierten auf vollstaendigkeit ueberpruefen kann
   # samples_in_mod <- stringr::str_replace_all(samples_in, " ", ".")
-  # samples_in_mod <- stringr::str_replace_all(samples_in_mod, "-", ".")   
+  # samples_in_mod <- stringr::str_replace_all(samples_in_mod, "-", ".")
   samples_in_mod <- samples_in
   check = table(table(samples_in_mod))
   if(identical(names(check), "1")==F) stop(' Proben ID nicht unique in diesem Run')
   qlistcheck2 = venn2(samples_in_mod,spalten$id_from_colname, plotte = showVennplots)
   # str(qlistcheck2)
   if(length(setdiff(samples_in_mod, na.omit(spalten$id_from_colname))) != 0) stop("nicht alle zu importierende IDs konnten expressionsspaltenIDs zugeordnet werden")
-  spalten$sample_id_toimport <- samples_in[match_hk(spalten$id_from_colname, samples_in_mod)]      
+  spalten$sample_id_toimport <- samples_in[match_hk(spalten$id_from_colname, samples_in_mod)]
   subset_all <-  sample_overview_l3[ sample_overview_l3$nobkgd_f == (filestable$nobkgd_f[i]) &
                                        sample_overview_l3$old_ID %in% spalten$sample_id_toimport,]
   head(subset_all)
@@ -101,9 +101,9 @@ for(i in 1:length(filestable[,1])){
   spalten$new_ID <- subset_all[match(spalten$sample_id_toimport, subset_all$old_ID),"new_ID"]
   zugeordnete_new_ID = spalten[is.na(spalten$sample_id_toimport)==F, "new_ID"]
   if(any(is.na(zugeordnete_new_ID))) stop("new_ID zuordnung zur ausgelesenen ID aus spalten$sample_id_toimport failed")
-  spalten$new_colname <-  stringi::stri_replace_all_fixed(spalten$old_colname, spalten$originalid_from_colname, spalten$new_ID) 
+  spalten$new_colname <-  stringi::stri_replace_all_fixed(spalten$old_colname, spalten$originalid_from_colname, spalten$new_ID)
   ht(spalten,7)
-  
+
   #zu importierende spalten
   importindex <- is.na(spalten$sample_id_toimport)==F
   spalten_good <- as.character(spalten[importindex, "old_colname"])
@@ -133,7 +133,7 @@ all_nobkgd = data.frame(all_nobkgd)
 checkvollstaendig3 <- dim(all_nobkgd[,grep("Detection[ \\.]Pval", names(all_nobkgd), value=T)])
 checkvollstaendig3
 if(checkvollstaendig3[2] != dim(sample_overview_l3)[1]) {
-  status3s01_allelinfosda = ("Problem found: Could not import expression information (Detection.Pval) from all samples\n") 
+  status3s01_allelinfosda = ("Problem found: Could not import expression information (Detection.Pval) from all samples\n")
   stop(status3s01_allelinfosda)
 } else  {status3s01_allelinfosda = "Succesfully imported expression information (Detection.Pval) from all samples, no problem found.\n";
 message(status3s01_allelinfosda)}
@@ -151,7 +151,7 @@ qlist_import = venn2(all_avg, all_detection, plotte = showVennplots)
 checkvollstaendig3b <- dim(all_nobkgd[ ,grep("AVG_Signal", names(all_nobkgd), value  = T)])
 checkvollstaendig3b
 if(checkvollstaendig3b[2] != dim(sample_overview_l3)[1]) {
-  status3bs01_allelinfosda = ("Problem found: Could not import expression information (AVG_Signal) from all samples\n") 
+  status3bs01_allelinfosda = ("Problem found: Could not import expression information (AVG_Signal) from all samples\n")
   stop(status3bs01_allelinfosda)
 } else  {status3bs01_allelinfosda = "Succesfully imported expression information (AVG_Signal) from all samples, no problem found.\n";
 message(status3bs01_allelinfosda)}
@@ -172,7 +172,7 @@ min_nobk <- data.frame(colmin = sapply(all_nobkgd[, sapply(all_nobkgd, is.numeri
                                        function (x) min(x)), colnam = names(all_nobkgd[, sapply(all_nobkgd, is.numeric)]))
 ht(min_nobk)
 head(min_nobk[grep("AVG", min_nobk$colnam, ignore.case = T), "colmin"])
-check_na <- table( min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA="ifany")    
+check_na <- table( min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA="ifany")
 check_na
 table(is.na(names(check_na)))
 if(any(is.na(names(check_na))) != 0){
@@ -195,7 +195,7 @@ if(grepl("^Problem found", status3s02_NAexprwerte))  {
   # loaded3
   # rm(list = c(setdiff(loaded3, "missingilmns_det")))
   # missingilmns_det
-  hh(all_nobkgd)  
+  hh(all_nobkgd)
   na_ilmns <- all_nobkgd[,grep("AVG", names(all_nobkgd))]
   hh(na_ilmns)
   na_ilmns <- as.matrix(na_ilmns)
@@ -211,7 +211,7 @@ if(grepl("^Problem found", status3s02_NAexprwerte))  {
   all_nobkgd <- all_nobkgd[ all_nobkgd$PROBE_ID %nin% ilmn2remove_NAfound,]
   dim(all_nobkgd_initial)
   dim(all_nobkgd)
-  s03_1_rausgeflogen_weilNA = ilmnAnnot014allgInfos[ paste0("ILMN_", ilmnAnnot014allgInfos$ilmn) %in% ilmn2remove_NAfound,]  
+  s03_1_rausgeflogen_weilNA = ilmnAnnot014allgInfos[ paste0("ILMN_", ilmnAnnot014allgInfos$ilmn) %in% ilmn2remove_NAfound,]
 } else {
   na_ilmns_countNAs <- data.frame(NAs = character(0))
   sm_checkNA <- character(0)
@@ -220,7 +220,7 @@ if(grepl("^Problem found", status3s02_NAexprwerte))  {
 }
 
 ## ----negatcheck2---------------------------------------------------------
-#false 2213     
+#false 2213
 checkneg <- table(min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA = "ifany")
 checkneg
 if(any(grepl("TRUE", names(checkneg)))){
@@ -250,7 +250,7 @@ if( grepl("^Problem found", status3s02_negativeexprwerte)) {
   # loaded3 <- load("obj/s02_1_fordoku.RData")
   # loaded3
   # rm(list = c(setdiff(loaded3, "pc123")))
-  
+
   # farbe <- as.numeric(rownames(pc123) %in% neg_ind)+1
   # try(rgl::plot3d(pc123[1:3], col = farbe, size = 7)) # sess
   # plot(pc123[1:2], col = farbe, cex = farbe, pch = "x")
@@ -279,7 +279,7 @@ min_nobk <- data.frame(colmin = sapply(all_nobkgd[, sapply(all_nobkgd, is.numeri
                                        function(x) min(x)),colnam = names(all_nobkgd[, sapply(all_nobkgd, is.numeric)]))
 ht(min_nobk)
 head(min_nobk[grep("AVG", min_nobk$colnam), "colmin"])
-checkneg <- table(min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA = "ifany") #false 2213     
+checkneg <- table(min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA = "ifany") #false 2213
 checkneg
 table(is.na(names(checkneg)))
 if(any(grepl("TRUE", names(checkneg))) | any(is.na(names(checkneg))) != 0){
@@ -291,7 +291,7 @@ if(any(grepl("TRUE", names(checkneg))) | any(is.na(names(checkneg))) != 0){
 dim(filestable)
 genenames <- setdiff(names(all_nobkgd), grep("PROBE_ID", names(all_nobkgd), value = T))
 # str(genenames)
-dim(all_nobkgd)       
+dim(all_nobkgd)
 all_nobkgd <- all_nobkgd[, c("PROBE_ID", genenames)]
 dim(all_nobkgd)
 
@@ -310,9 +310,9 @@ ht12object$id_overview = id_overview
 time6 <- Sys.time()
 use_names <- names(all_nobkgd)
 use_names <- c("PROBE_ID", grep("AVG_Signal",use_names, value=T),grep("Detection.Pval",use_names, value=T) )
-stopifnot(all(use_names %in% names(all_nobkgd)))        
+stopifnot(all(use_names %in% names(all_nobkgd)))
 all_nobkgd_eset_input <- all_nobkgd[,names(all_nobkgd) %in% use_names]
-dim(all_nobkgd_eset_input)          
+dim(all_nobkgd_eset_input)
 table(names(all_nobkgd_eset_input) %in% use_names , useNA="always")
 setdiff( names(all_nobkgd_eset_input) ,use_names)
 # filename_lumibauen <- tempfile()
@@ -320,7 +320,7 @@ setdiff( names(all_nobkgd_eset_input) ,use_names)
 # debugnames <- names(all_nobkgd_eset_input)[c(1:20, (dim(all_nobkgd_eset_input)[2]-4):dim(all_nobkgd_eset_input)[2])]
 # debugnames
 
-# write.delim(all_nobkgd_eset_input[, debugnames], filename_lumibauen) 
+# write.delim(all_nobkgd_eset_input[, debugnames], filename_lumibauen)
 # write.delim(all_nobkgd_eset_input, filename_lumibauen)
 time6 <-  Sys.time() -time6
 time7 <- Sys.time()
@@ -364,7 +364,7 @@ stopifnot(length(qlist_lumicheck$q2) + length(qlist_lumicheck$q3) == 0)
 time7 <- Sys.time() - time7
 
 
-# samples as used 
+# samples as used
 sample_overview_l4doku <- sample_overview_l3_initial
 mytable(sample_overview_l4doku$reason4exclusion)
 mytable(sample_overview_l4doku$in_study)
@@ -389,7 +389,7 @@ check <- dim(sample_overview_l4)
 sample_overview_l4 <- sample_overview_l4[ is.na(sample_overview_l4$con_f) == F, ]
 if(identical(check, dim(sample_overview_l4)) == F) stop("not all  control filenames given ...")
 
-# annotation der proben 
+# annotation der proben
 head(annotcon)
 table(table(annotcon$Probe_Id))
 table(table(annotcon$Array_Address_Id))
@@ -401,7 +401,7 @@ sum(table(annotcon$Reporter_Group_id))
 # all_con <- unique(read.delim(controlprobes_fn, stringsAsFactors=F))     #liste aller vorhandenen ilmns einlesen
 # str(all_con)   #883 obs. of  1 variable:
 # table(table(all_con))
-# 
+#
 # qlist0 = venn2(all_con$ProbeID, annotcon$Array_Address_Id)
 # str(qlist0)
 
@@ -437,7 +437,7 @@ for(i in 1:length(filestable[,1])){
   if(length(samples_in) == 0) stop("keine IDs zu importieren - checke skript!")
   check <- table(table(unique(samples_in)))
   check
-  if(identical(names(check), "1") == F) stop("given IDs in table not unique!")    
+  if(identical(names(check), "1") == F) stop("given IDs in table not unique!")
   #if((length(grep("\\.", samples_in)) != 0 )) stop(paste("punkt im skript -> skript modifizieren!!! checke id:", grep("\\.", samples_in, value=T)))
   if(length(setdiff(c("TargetID", "ProbeID"), names(con)) != 0)) stop('mindestens ein sample_overview_l4ut von "TargetID", "ProbeID" fehlt - skript modifizieren')
   #bezugdatenframe zum umbennenen der IDs bauen
@@ -446,7 +446,7 @@ for(i in 1:length(filestable[,1])){
                                                       "\\.AVG_Signal|\\.Detection.Pval|\\.BEAD_STDERR|\\.Avg_NBEADS"), "[", 1)
   # spalten$id_from_colname <- as.character(str_replace(spalten$originalid_from_colname, "^X", "")) #aus historischen gruenden drinne, stoert nicht
   spalten$id_from_colname <- as.character(spalten$originalid_from_colname)
-  
+
   samples_in_mod <- samples_in
   check <- table(table(samples_in_mod))
   if(identical(names(check), "1") == F)
@@ -456,7 +456,7 @@ for(i in 1:length(filestable[,1])){
   if(length(setdiff(samples_in_mod, na.omit(spalten$id_from_colname))) != 0)
     stop("nicht alle zu importierende IDs konnten expressionsspaltenIDs zugeordnet werden")
   spalten$sample_id_toimport <- samples_in[match_hk(spalten$id_from_colname, samples_in_mod)]
-  
+
   # detailed checke to here
   subset_all <-  sample_overview_l4[(sample_overview_l4$con_f) ==
                                       (filestable$con_f[i]) & (sample_overview_l4$old_ID) %in% (spalten$sample_id_toimport),]
@@ -467,9 +467,9 @@ for(i in 1:length(filestable[,1])){
     stop("new_ID zuordnung aus spalten$sample_id_toimport failed")
   spalten$new_colname <- stringi::stri_replace_all_fixed(spalten$old_colname,
                                                          spalten$originalid_from_colname,
-                                                         spalten$new_ID) 
+                                                         spalten$new_ID)
   ht(spalten)
-  
+
   #zu importierende spalten
   spalten_good <- as.character(spalten[is.na(spalten$sample_id_toimport) == F, "old_colname"])
   new_names <- spalten[is.na(spalten$sample_id_toimport) == F, "new_colname"]
@@ -479,7 +479,7 @@ for(i in 1:length(filestable[,1])){
   if(length(grep("NA", names(all_con))) != 0)
     stop("NA im neuen spaltennamen aufgetreten - checke skript")
   #umbenennung dokumentieren
-  
+
   spalten$file_used <-  filestable$con_f[i]
   id_overview <- data.frame(rbindlist(list(id_overview, spalten)))
 }
@@ -509,7 +509,7 @@ if(colseparator != ".") {
 checkConvollstaendig3 <- dim(all_con[,grep("Detection.Pval", names(all_con), value = T)])
 checkConvollstaendig3
 if(checkConvollstaendig3[2] != dim(sample_overview_l4)[1]) {
-  status4s01_allelinfosda = ("Problem found: Could not import control-expression information  (Detection.Pval) from all samples\n") 
+  status4s01_allelinfosda = ("Problem found: Could not import control-expression information  (Detection.Pval) from all samples\n")
   stop(status4s01_allelinfosda)
 } else {status4s01_allelinfosda = "Succesfully imported control-expression information from  (Detection.Pval) all samples, no problem found.\n"; message(status4s01_allelinfosda)}
 
@@ -518,7 +518,7 @@ if(checkConvollstaendig3[2] != dim(sample_overview_l4)[1]) {
 checkConvollstaendig3b <- dim(all_con[,grep("AVG_Signal", names(all_con), value = T)])
 checkConvollstaendig3b
 if(checkConvollstaendig3b[2] != dim(sample_overview_l4)[1]) {
-  status3bs01_allelinfosda = ("Problem found: Could not import expression information (AVG_Signal) from all samples for control probes\n") 
+  status3bs01_allelinfosda = ("Problem found: Could not import expression information (AVG_Signal) from all samples for control probes\n")
   stop(status3bs01_allelinfosda)
 } else  {status3bs01_allelinfosda = "Succesfully imported expression information (AVG_Signal) from all samples for control probes, no problem found.\n"; message(status3bs01_allelinfosda)}
 
@@ -538,7 +538,7 @@ min_nobk <- data.frame(colmin = sapply(all_con[, sapply(all_con, is.numeric)],
                                        function(x) min(x)),colnam = names(all_con[, sapply(all_con, is.numeric)]))
 ht(min_nobk)
 head(min_nobk[grep("AVG", min_nobk$colnam), "colmin"])
-checkCon_na <- table( min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA = "ifany")      #false 2213     
+checkCon_na <- table( min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA = "ifany")      #false 2213
 checkCon_na
 table(is.na(names(checkCon_na)))
 if (any(is.na(names(checkCon_na))) != 0){
@@ -557,14 +557,14 @@ if (grepl("^Problem found",status4s02_NAexprwerte)) {
   showNA(sm_checkConneg2)
   sm_checkConNA <- sm_checkConneg2[apply(sm_checkConneg2, 1, function(x) any(is.na(x))),,drop=F]
   sm_checkConNA  # NA verstanden, das sind die probes, wo eines fehlt
-  
+
   # rauswerfen der missing probe
   # loaded3 = load("obj/s01_1_fordoku.RData")
   # loaded3
   # rm(list = c(setdiff(loaded3, "missing_ilmnCons")))
   # missing_ilmnCons
   # ilmn2remove = paste0("ILMN_",missing_ilmnCons$missing_ilmnCons) # TODO falls mal was gefunden wird, hier zeile checken
-  hh(all_con)  
+  hh(all_con)
   na_ilmns <- all_con[,grep("AVG", names(all_con))]
   hh(na_ilmns)
   na_ilmns <- as.matrix(na_ilmns)
@@ -592,7 +592,7 @@ if (grepl("^Problem found",status4s02_NAexprwerte)) {
 ## ----negatcheckCon2---------------------------------------------------------
 min_nobk <- data.frame(colmin = sapply(all_con[, sapply(all_con, is.numeric)],
                                        function(x) min(x)),colnam = names(all_con[, sapply(all_con, is.numeric)]))
-checkConneg <- table( min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA = "ifany") #false 2213     
+checkConneg <- table( min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA = "ifany") #false 2213
 checkConneg
 if (any(grepl("TRUE", names(checkConneg)) & is.na(names(checkConneg)) == F)){
   status4s02_negativeexprwerte <- ("Problem found: negative control-expression values not allowed.")
@@ -619,12 +619,12 @@ if (grepl("^Problem found", status4s02_negativeexprwerte)) {
   strange_probe_expr[strange_probe_expr<0]
   # str(strange_probe_expr)
   # hist(strange_probe_expr, breaks = 111)
-  
+
   # wie sieht das individuum insgesamt aus?
   # loaded3 <- load("obj/s01_1_fordoku.RData")
   # loaded3
   # rm(list = c(setdiff(loaded3, "pc123")))
-  # 
+  #
   # farbe <- as.numeric(rownames(pc123) %in% neg_indCon) + 1
   # try(rgl::plot3d(pc123[1:3], col = farbe, size = 7))
   # plot(pc123[1:2], col = farbe, cex = farbe, pch = "x")
@@ -647,11 +647,11 @@ dim(sample_overview_l5)
 dim(sample_overview_l4)
 
 ## ----whcheckConneg----------------------------------------------------------
-min_nobk <- data.frame(colmin = sapply(all_con[, sapply(all_con, is.numeric)], 
+min_nobk <- data.frame(colmin = sapply(all_con[, sapply(all_con, is.numeric)],
                                        function(x) min(x)), colnam = names(all_con[, sapply(all_con, is.numeric)]))
 ht(min_nobk)
 head(min_nobk[grep("AVG", min_nobk$colnam), "colmin"])
-checkConneg <- table(min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA = "ifany") # false 2213     
+checkConneg <- table(min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA = "ifany") # false 2213
 checkConneg
 table(is.na(names(checkConneg)))
 if(any(grepl("TRUE", names(checkConneg))) | any(is.na(names(checkConneg))) !=0){
@@ -690,7 +690,7 @@ checkCon <- length(genenames)
 if (length(genenames) != dim(sample_overview_l5)[1]*2)
   stop ("nicht alle gennamen wie erwartet")
 all_con <- all_con[, c("ProbeID","TargetID", genenames)]
-checkCon <- dim(all_con)        
+checkCon <- dim(all_con)
 if (checkCon[2]-2 != dim(sample_overview_l5)[1]*2)
   stop ("reduktion von all_con nicht geklappt")
 
@@ -718,11 +718,11 @@ all_nobkgd[1:11, 1:5]
 all_con[1:11, 1:5]
 dim(all_nobkgd)
 
-##mergen 
+##mergen
 #fehlende spalten in all_con hinzufuegen und ueberfzaehlige loeschen
 #kontrolliern, dass info von BEADS wirklich nicht mehr da ist
 all_nobkgd2 <- all_nobkgd[, !names(all_nobkgd) %in% grep("Avg_NBEADS$|BEAD_STDERR", names(all_nobkgd), value = T)]
-all_con$PROBE_ID <- annotcon[match(all_con$ProbeID, annotcon$Array_Address_Id), "Probe_Id"]  
+all_con$PROBE_ID <- annotcon[match(all_con$ProbeID, annotcon$Array_Address_Id), "Probe_Id"]
 if(any(is.na(all_con$PROBE_ID) == T))
   stop("missings wo keine erwartet code 12444")
 setdiff(names(all_nobkgd2), names(all_con))
@@ -755,7 +755,7 @@ all_nobkgd_overlap <- all_nobkgd_overlap[order(all_nobkgd_overlap$PROBE_ID),sort
 all_con_overlap <- as.matrix(all_con_overlap)
 dim(all_con_overlap)
 all_nobkgd_overlap <- as.matrix(all_nobkgd_overlap)
-dim(all_nobkgd_overlap)  
+dim(all_nobkgd_overlap)
 hh(all_con_overlap)
 hh(all_nobkgd_overlap)
 
@@ -773,7 +773,7 @@ sm2 = ercc_check1[ungleichkriterium, ]
 sm2[is.na(sm2$all_con) == F, ]
 ercc_check <- sum(ungleichkriterium, na.rm = T) == 0
 if (ercc_check == F) {
-  status4s05_ercc_check <- paste0("Problem found: ERCC expression levels differ  for identical probes in expression files and control files") 
+  status4s05_ercc_check <- paste0("Problem found: ERCC expression levels differ  for identical probes in expression files and control files")
   stop (status4s05_ercc_check)
 } else {status4s05_ercc_check = "ERCC expression levels are the same for identical probes in expression files and control files, no problem identified\n"; message(status4s05_ercc_check)
 }
@@ -793,7 +793,7 @@ if (length(names_toadd) >0) {
     all_con_new$toadd <- NA
     names(all_con_new)[ names(all_con_new)=="toadd"] <- i
   }
-} #TODO Reporten 
+} #TODO Reporten
 names_toadd
 qlist_prerbing <- venn2(names(all_nobkgd2), names(all_con_new), plotte = showVennplots)
 # str(qlist_prerbing)
@@ -825,7 +825,7 @@ vgl2 = venn2(names(total_nobkgd), names(all_nobkgd), plotte = showVennplots)
 time5 <- Sys.time() - time5
 time6 <- Sys.time()
 message("Creating  expressionset of gene probes as well as control probes via lumi... ")
-total_nobkgd_eset <- suppressWarnings(lumi::lumiR(total_nobkgd_input_fn, lib.mapping = "lumiHumanIDMapping", verbose = T, 
+total_nobkgd_eset <- suppressWarnings(lumi::lumiR(total_nobkgd_input_fn, lib.mapping = "lumiHumanIDMapping", verbose = T,
                            columnNameGrepPattern = list(exprs='AVG_Signal|AVG_SIGNAL',
                                                         detection='Detection|DETECTION')))
 class(total_nobkgd_eset) #"ExpressionSet"
@@ -873,10 +873,10 @@ fordokuCon <- c(stati, "notCompliteProbesCon", "s04_1_rausgeflogen_weilNA",
                            "ilmns_after_merge_with_NA_entries",
                            "cols_after_merge_with_NA_entries",
                            "total_nobkgd_eset_dim", "neg_indCon")
-                    
+
 
 ## ----save, results='markup', echo=T, eval=T------------------------------
-time6  
+time6
 time5
 
 
@@ -887,7 +887,7 @@ tosave = c(           "neg_ind",
            "negprobes",
            "ilmn2remove_NAfound",
            "na_ilmns_countNAs",
-           "all_nobkgd_eset_dim", 
+           "all_nobkgd_eset_dim",
            'sample_overview_l3', "checkConneg", fordokuCon)
 
 ht12object$all_nobkgd_eset = all_nobkgd_eset
@@ -900,5 +900,5 @@ ht12object$dokuobjects_createExpressionSet = lapply(tosave, function(x) get(x))
 names(ht12object$dokuobjects_createExpressionSet) = tosave
 # str(ht12object$dokuobjects_createExpressionSet)
 ht12object$history = rbind(ht12object$history, data.frame(calls = paste(Sys.time(), deparse(myparameters))))
-ht12object  
+ht12object
   }
