@@ -80,6 +80,7 @@ Firstly, package dependencies must be met. When installation of the package fail
 
 # get the project root directory
 # prepro.folder <- here() 
+# setwd(/path/to/project)
 prepro.folder <- getwd() # please choose a working directory
 
 # location to example data
@@ -88,6 +89,12 @@ data.directory <- path.package("HT12ProcessoR")
 # create the object with the names of the input files ##
 # IDs can be chosen freely, but using terms identifying the data files might be advisable 
 my.fileset_id <- c('590-651', 'HSS106-HSS155')
+
+# create the results-folder if necessary
+dir.create(paste0(prepro.folder, "/tosend/"))
+
+# also create an obj/ folder for intermediary results
+dir.create(paste0(prepro.folder, "/obj/"))
 
 # control probe data file
 my.con_f <- c(paste0(data.directory, "/extdata/Run12_ControlProbeProfile_590-651.txt"), # control probe measurements + ercc (spike-in -- class of control probes)
@@ -139,12 +146,6 @@ myparams[myparams$variable == "file_names_of_files_and_folders", "value"] <- inp
 
 # where should the results be saved?
 myparams[myparams$variable == "datafolder_results", "value"] <- paste0(prepro.folder, "/tosend/")
-
-# create the results-folder if necessary
-dir.create(paste0(prepro.folder, "/tosend/"))
-
-# also create an obj/ folder for intermediary results
-dir.create(paste0(prepro.folder, "/obj/"))
 
 # where should the file be saved (overwrite the previously read-in file)
 myparamfile <- paste0(prepro.folder, "/obj/input_parameter_010.txt")
