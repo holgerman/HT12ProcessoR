@@ -208,7 +208,7 @@ pander(ht(prepro_ht12$chipsamples, 1))
     + Typically, several chips are processed together, this variable is defined as `processingbatch` - The default is the column `fileset_id` from the above file `input_filename`
     + Finally, sometimes several runs behave differently, these might be specified in the variable `strangebatch` - default here is `0`
 
-```{pre.pro.step.2}
+```{r pre.pro.step.2}
 # preview first and last lines
 pander(ht(prepro_ht12$chipsamples, 2))
 
@@ -303,7 +303,7 @@ Changes to the HT12prepro-object, among others, are:
   * A slot with the detailed probe-related expression level informationis created named `$genesdetail`
   * The slot with the history of the commands named `$history` is updated
 
-```{r, pre.pro.step.4}
+```{r pre.pro.step.4}
 # execute step 4 by running this function
 prepro_ht12 <- filterLowExpressed(prepro_ht12, paramfile = myparamfile)
 
