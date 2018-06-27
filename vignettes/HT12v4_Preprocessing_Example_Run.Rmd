@@ -55,7 +55,7 @@ options(stringsAsFactors=FALSE)
 
 This example shows a typical preprocessing of ILLUMINA HT12v4 data using the package HT12ProcessoR. This can be applied for a few samples up to thousands of samples. Details on the Illumina technology can be found here: http://support.illumina.com/content/dam/illumina-marketing/documents/products/datasheets/datasheet_gene_exp_analysis.pdf
 
-This packages comes with an included example (a subset with 96 Chips from GEO accession: GSE65907). This data can be found in `r paste0(path.package("HT12ProcessoR"), "/", "extdata")`. For the purpose of this exercise, copy the folder extdata/ into a new directory, e.g. "~/HT12PreproVignette/extdata/". Additionally, create an empty file called ".here" (just an empty text file) in the base folder of your project. In my example this would be ~/HT12PreproVignette/. We will need this file to set relative paths. 
+This packages comes with an included example (a subset with 96 Chips from GEO accession: GSE65907). This data can be found in `r paste0(path.package("HT12ProcessoR"), "/", "extdata")`. All annotation files needed for the preprocessing are stored as an .RData object in the data/ folder of this package. For this vignette, please set a working directory (`setwd(path/to/project)`), where all files created by this package will be stored.
 
 ## Check dependencies
 
@@ -68,43 +68,47 @@ Firstly, package dependencies must be met. When installation of the package fail
   * A tab-delimeted file should be created specifying location of these three files. Following columns are required:
   
       + `fileset_id`: a short ID for a fileset
-      + `con_f`: full path and filename of the control probe data file
-      + `nobkgd_f`: full path and filename of the gene probe data file
-      + `sample_f`: full path and filename of the control probe data file
+      + `con_f`: full path and filename of the control probe centric data file
+      + `nobkgd_f`: full path and filename of the gene probe centric data file
+      + `sample_f`: full path and filename of the sample centric data file
   
   * The file should be saved in the folder intended for preprocessing the data
 
 ```{r prepare.examples, echo = T}
 # check the root of your project
-here::dr_here(show_reason = T)
+# here::dr_here(show_reason = T) #  the here package makes the navigation in directories easier but works best from whitin R-Projects
 
 # get the project root directory
-prepro_folder <- here()
+# prepro.folder <- here() 
+prepro.folder <- getwd() # please choose a working directory
 
-## create the object with the names of the input files ##
-# What is this?
-fileset_id = c('f34-21', '334-2184') # ???
+# location to example data
+data.directory <- path.package("HT12ProcessoR")
+
+# create the object with the names of the input files ##
+# IDs can be chosen freely, but using terms identifying the data files might be advisable 
+my.fileset_id <- c('590-651', 'HSS106-HSS155')
 
 # control probe data file
-my.con_f <- c(here("extdata/Run12_ControlProbeProfile_590-651.txt"),
-              here("extdata/ControlProbeProfile_HSS106-HSS155.txt"))
+my.con_f <- c(paste0(data.directory, "/extdata/Run12_ControlProbeProfile_590-651.txt"), # control probe measurements + ercc (spike-in -- class of control probes)
+              paste0(data.directory, "/extdata/ControlProbeProfile_HSS106-HSS155.txt")) #  second example (processing batch 1 & 2)
 
 # gene probe file
-my.nobkgd_f <- c(here("extdata/Run12_nonorm_nobkgd_590-651.txt"),
-              here("extdata/Einzelanalyse_nonorm_nobkgd_HSS106-HSS155.txt"))
+my.nobkgd_f <- c(paste0(data.directory, "/extdata/Run12_nonorm_nobkgd_590-651.txt"), # raw probe data of human gene expression 
+                 paste0(data.directory, "/extdata/Einzelanalyse_nonorm_nobkgd_HSS106-HSS155.txt"))
 
 # sample file
-my.sample_f <- c(here("extdata/Run12_SamplesTable_590-651.txt"),
-              here("extdata/SamplesTable_HSS106-HSS155.txt"))
+my.sample_f <- c(paste0(data.directory, "/extdata/Run12_SamplesTable_590-651.txt"), # sample annotation (each measured indiviuum)
+                 paste0(data.directory, "/extdata/SamplesTable_HSS106-HSS155.txt"))
 
 # consolidate in input-file
-input <- data.table(fileset_id = c("f34-21", "334-2184"), 
+input <- data.table(fileset_id = my.fileset_id, 
                     con_f = my.con_f,
                     nobkgd_f = my.nobkgd_f,
                     sample_f = my.sample_f)
 
 # how should the input file be called?
-input_filename <- here("01_file_overview.txt")
+input_filename <- paste0(prepro.folder, "/obj/01_file_overview.txt")
 
 # save the input file for later use
 write.table(x = input,
@@ -120,7 +124,7 @@ write.table(x = input,
 Next, customize project-specific variables in a parameter file. This file is used to provide most relevant parameters in a single place for the individual preprocessing functions. Parameters will also be explained later. An example is provided with this package
 
 ```{r parameter.file}
-myparams <- read.delim(here("extdata/input_parameter_010.txt"),
+myparams <- read.delim(paste0(data.directory, "/extdata/input_parameter_010.txt"),
                        as.is = T)
 ```
 
@@ -134,16 +138,16 @@ Project-specific parameters that should be customized initially are:
 myparams[myparams$variable == "file_names_of_files_and_folders", "value"] <- input_filename
 
 # where should the results be saved?
-myparams[myparams$variable == "datafolder_results", "value"] <- here("tosend")
+myparams[myparams$variable == "datafolder_results", "value"] <- paste0(prepro.folder, "/tosend/")
 
 # create the results-folder if necessary
-dir.create(here("tosend"))
+dir.create(paste0(prepro.folder, "/tosend/"))
 
 # also create an obj/ folder for intermediary results
-dir.create(here("obj"))
+dir.create(paste0(prepro.folder, "/obj/"))
 
 # where should the file be saved (overwrite the previously read-in file)
-myparamfile <- here("extdata", "input_parameter_010.txt")
+myparamfile <- paste0(prepro.folder, "/obj/input_parameter_010.txt")
 
 # save the file again with the above changes
 write.table(myparams,
@@ -161,7 +165,7 @@ This step does the following:
   * checks files specified in myparamfile for:
     + are expected files present
     + does each file have information for each sample
-    + are multiple identical IDs in different expression files present, if yes, this will be resolved according to parameter 
+    + are multiple identical IDs in different expression files present, if yes, this will be resolved according to parameter `renameDublettes`
     + properly formated sentrix IDs for all samples present
     + sentrix IDs for all samples present
     + 47323 ILMN gene expression probes present in all files
@@ -207,7 +211,7 @@ pander(ht(prepro_ht12$chipsamples, 1))
 # preview first and last lines
 pander(ht(prepro_ht12$chipsamples, 2))
 
-# define samples to be excluded
+# define samples to be excluded, e.g. when different projects are processed on the same chip
 exclude.this <- c("614", "638", "HSS 108", "HSS 112", "HSS 115", "HSS 125", "HSS 127", "HSS 133", "HSS 137", "HSS 138", "HSS 146", "HSS 151","HSS 155")
 
 # Exclude Samples by modifying the $chipsamples element
@@ -220,7 +224,7 @@ table(prepro_ht12$chipsamples$subgroup)
 # show which IDs were processed in which batch
 xtabs(~prepro_ht12$chipsamples$Sentrix.Barcode + prepro_ht12$chipsamples$processingbatch)
 
-# do we have strange batches?
+# do we have strange batches on top of regular batch structure
 xtabs(~prepro_ht12$chipsamples$strangebatch + prepro_ht12$chipsamples$processingbatch)
 
 ## Quick Check for major differences based on Attributes from the provided ILLUMINA-sample-files
@@ -240,7 +244,7 @@ pca.plot <- ggplot(initial_pca$scores, aes(PC1,
 # plot a static version
 pca.plot
 
-# interactive visualisation 
+# interactive visualisation - check homogeinity etc.
 pca.plot %>% ggplotly()
 ```
   
@@ -263,7 +267,7 @@ Additionally, integrity checks are carried out:
   * check whether gene expression data and control expression data for all samples have been imported
   * check for NAs present in gene expression and control expression data
   * check for negative gene expression values in gene expression and control expression data and, if found, replaced with the lowest expression value found
-  * check for similar values of ERCC probes and housekeeping probes in gene-expression and control-expression data as Illumina reports them in both of the corresponding files
+  * check for similar values of [ERCC](http://www.thermofisher.com/order/catalog/product/4456740) probes and housekeeping probes in gene-expression and control-expression data as Illumina reports them in both of the corresponding files
   
 ```{r pre.pro.step.3}
 # create the ExpressionSet 
@@ -274,19 +278,14 @@ prepro_ht12 <- createExpressionSet(prepro_ht12, paramfile = myparamfile) # watch
 # show the command history
 kable(prepro_ht12$history)
 
-# preview expression set
-prepro_ht12$all_nobkgd_eset
-
-# TODO INSERT INFORMATION ABOUT WHAT I SEE HERE
-hh(prepro_ht12$rawdataWOcons_joined)
-hh(detection(prepro_ht12$all_nobkgd_eset))
-
-# TODO WHERE IS THE DIFFERENCE TO THE FILE ABOVE? 
+# preview expressionset including samples and controls
 prepro_ht12$total_nobkgd_eset
 
-# TODO
-hh(prepro_ht12$rawdataOnlycons_joined)
-hh(detection(prepro_ht12$total_nobkgd_eset))
+# detection levels per probe
+hh(lumi::detection(prepro_ht12$total_nobkgd_eset))
+
+# expression lvl per probe
+hh(lumi::exprs(prepro_ht12$total_nobkgd_eset))
 ```
 
 # Step 4 - Function `filterLowExpressed`: Filter badly expressed individuals & mark badly expressed genes
@@ -433,7 +432,7 @@ kable(prepro_ht12$history)
   + PCA of gene expression after preprocessing using only expression probes that are expressed, not overinflated regarding batch affects and beeing specific to the human genome when considering a remapping approach according to Barbosa-Moralis et al. (2010)
 
 * Within the updated HT12prepro-object among others, 
-  + plots are also stored in slot `$`
+  + plots are also stored in slot `$dokuobjects_visualizePreprocessing`
   + the slot with the history of the commands named `$history` is updated
 
 ```{r pre.pro.step.9}
@@ -466,7 +465,7 @@ Parameter `file_renaming_samples_tosent` can specify a filename where a column n
 
 ```{r pre.pro.step.10}
 ## Set parameter to use provided renaming file
-renaming_fn <- here("extdata", "renamingsamples.txt")
+renaming_fn <- paste0(data.directory, "/extdata/renamingsamples.txt")
 
 # edit parameter file with location of renaming-file
 myparams[ myparams$variable == "file_renaming_samples_tosent", "value"] <- renaming_fn
@@ -493,7 +492,7 @@ It might be helpful, to save the HT12-object to preserve detailed information on
 
 ```{r save.rdata}
 # save an .RData object containing the final prepro_ht12 object
-save(prepro_ht12, file = here("obj", "prepro_example1_HT12object.RData"))
+save(prepro_ht12, file = paste0(prepro.folder, "/obj/prepro_example1_HT12object.RData"))
 ```
 
 # Step 11 - Function `createTextForMethods()`: Information for Material and Methods section of a manuscript

@@ -2,6 +2,7 @@
 
 ### Test-Run with example data ###
 
+* was passiert mit files in data/
 * make Vignette available via browseVignettes()
 * inst/ folder not available after installation, neither is the vignettes folder
 * what are the meaning of fileset_id etc?
@@ -13,16 +14,20 @@
 * step2, why change tissue from all to pbmc?
 * step2, what does the xtabs step tell me?
 * initial PCA interpretation?
-* step3: what is ERCC?
+* step3: what is ERCC? -> spike-in control -> add doc reference
 * step3 file exploration? what do I see there?
 * STEP5 description: what is ERCCC?
 * step5 warning: 1: In min(x) : kein nicht-fehlendes Argument für min; gebe Inf zurück
                  2: In max(x) : kein nicht-fehlendes Argument für max; gebe -Inf zurück
+                 ---> create ISSUE
 * step 6: transformNormalizeHT12object - kann es immer noch ausgeführt werden oder muss es manuell übersprungen werden
+ ---> sollte gehen, kann über die expressionvalues gecheckt werden!
 * step6: removeBatchEffects - messages without spaces between numbers (found0batch effects etc)
-* step9: plots are stored in slot $.. ?
+* step9: plots are stored in slot $.. ? ---> nachtragen
+* error buillding vignette???
 
 ### Package ###
 
 * Vignette doesn't load -> create new vignette via devtools
 * exclude imise-specific initiate step from vignette (formulate generic package loading etc)
+* annotationen in data folder (braucht das paket)
