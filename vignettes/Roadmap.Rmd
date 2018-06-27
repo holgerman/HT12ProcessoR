@@ -8,7 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
  
  
@@ -25,10 +25,11 @@ require(ggplot2)
 require(data.table)
 require(knitr)
 require(pander)
-panderOptions('table.split.table', Inf)
+pander::panderOptions('table.split.table', Inf)
 
 
- require(HT12ProcessoR)  
+ require(HT12ProcessoR)
+
 
 
 knitr::opts_chunk$set(cache = FALSE, results = "markup", echo=T , fig.width = 9, fig.height = 6, eval = TRUE)
@@ -71,8 +72,8 @@ datadirectory = path.package("HT12ProcessoR")
                      sample_f = c(paste0(datadirectory,"/Run12_SamplesTable_590-651.txt"),paste0(datadirectory,"/SamplesTable_HSS106-HSS155.txt")))
 
 
-prepro_folder = "R:/genstat/07_programme/rtools/HT12ProcessoR/_archive/example2"
-dir.create(prepro_folder)
+prepro_folder = "R:/genstat/07_programme/rtools/HT12ProcessoR/_archive/example005"
+dir.create(prepro_folder, recursive = T)
 
 input_filename = paste0(prepro_folder, "/s01a_file_overview.txt")
 
