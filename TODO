@@ -15,6 +15,12 @@
 * initial PCA interpretation?
 * step3: what is ERCC?
 * step3 file exploration? what do I see there?
+* STEP5 description: what is ERCCC?
+* step5 warning: 1: In min(x) : kein nicht-fehlendes Argument für min; gebe Inf zurück
+                 2: In max(x) : kein nicht-fehlendes Argument für max; gebe -Inf zurück
+* step 6: transformNormalizeHT12object - kann es immer noch ausgeführt werden oder muss es manuell übersprungen werden
+* step6: removeBatchEffects - messages without spaces between numbers (found0batch effects etc)
+* step9: plots are stored in slot $.. ?
 
 ### Package ###
 
