@@ -30,7 +30,7 @@ knitr::opts_chunk$set(cache = F, results = "hide", echo = T, include = T, messag
 # start time measurement
 time.start <- Sys.time()
 
-# Packages for efficiently loading data
+# load required packages
 for (i in c(
   "HT12ProcessoR",
   "toolboxH",
