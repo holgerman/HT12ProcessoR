@@ -55,7 +55,7 @@ options(stringsAsFactors=FALSE)
 
 This example shows a typical preprocessing of ILLUMINA HT12v4 data using the package HT12ProcessoR. This can be applied for a few samples up to thousands of samples. Details on the Illumina technology can be found here: http://support.illumina.com/content/dam/illumina-marketing/documents/products/datasheets/datasheet_gene_exp_analysis.pdf
 
-This packages comes with an included example (a subset with 96 Chips from GEO accession: GSE65907). This data can be found in `r paste0(path.package("HT12ProcessoR"), "/", "inst")`. For the purpose of this exercise, copy the folder inst/ into a new directory, e.g. "~/HT12PreproVignette/inst/". Additionally, create an empty file called ".here" (just an empty text file) in the base folder of your project. In my example this would be ~/HT12PreproVignette/. We will need this file to set relative paths. 
+This packages comes with an included example (a subset with 96 Chips from GEO accession: GSE65907). This data can be found in `r paste0(path.package("HT12ProcessoR"), "/", "extdata")`. For the purpose of this exercise, copy the folder extdata/ into a new directory, e.g. "~/HT12PreproVignette/extdata/". Additionally, create an empty file called ".here" (just an empty text file) in the base folder of your project. In my example this would be ~/HT12PreproVignette/. We will need this file to set relative paths. 
 
 ## Check dependencies
 
@@ -86,16 +86,16 @@ prepro_folder <- here()
 fileset_id = c('f34-21', '334-2184') # ???
 
 # control probe data file
-my.con_f <- c(here("inst/Run12_ControlProbeProfile_590-651.txt"),
-              here("inst/ControlProbeProfile_HSS106-HSS155.txt"))
+my.con_f <- c(here("extdata/Run12_ControlProbeProfile_590-651.txt"),
+              here("extdata/ControlProbeProfile_HSS106-HSS155.txt"))
 
 # gene probe file
-my.nobkgd_f <- c(here("inst/Run12_nonorm_nobkgd_590-651.txt"),
-              here("inst/Einzelanalyse_nonorm_nobkgd_HSS106-HSS155.txt"))
+my.nobkgd_f <- c(here("extdata/Run12_nonorm_nobkgd_590-651.txt"),
+              here("extdata/Einzelanalyse_nonorm_nobkgd_HSS106-HSS155.txt"))
 
 # sample file
-my.sample_f <- c(here("inst/Run12_SamplesTable_590-651.txt"),
-              here("inst/SamplesTable_HSS106-HSS155.txt"))
+my.sample_f <- c(here("extdata/Run12_SamplesTable_590-651.txt"),
+              here("extdata/SamplesTable_HSS106-HSS155.txt"))
 
 # consolidate in input-file
 input <- data.table(fileset_id = c("f34-21", "334-2184"), 
@@ -120,7 +120,7 @@ write.table(x = input,
 Next, customize project-specific variables in a parameter file. This file is used to provide most relevant parameters in a single place for the individual preprocessing functions. Parameters will also be explained later. An example is provided with this package
 
 ```{r parameter.file}
-myparams <- read.delim(here("inst/input_parameter_010.txt"),
+myparams <- read.delim(here("extdata/input_parameter_010.txt"),
                        as.is = T)
 ```
 
@@ -143,7 +143,7 @@ dir.create(here("tosend"))
 dir.create(here("obj"))
 
 # where should the file be saved (overwrite the previously read-in file)
-myparamfile <- here("inst", "input_parameter_010.txt")
+myparamfile <- here("extdata", "input_parameter_010.txt")
 
 # save the file again with the above changes
 write.table(myparams,
@@ -466,7 +466,7 @@ Parameter `file_renaming_samples_tosent` can specify a filename where a column n
 
 ```{r pre.pro.step.10}
 ## Set parameter to use provided renaming file
-renaming_fn <- here("inst", "renamingsamples.txt")
+renaming_fn <- here("extdata", "renamingsamples.txt")
 
 # edit parameter file with location of renaming-file
 myparams[ myparams$variable == "file_renaming_samples_tosent", "value"] <- renaming_fn
