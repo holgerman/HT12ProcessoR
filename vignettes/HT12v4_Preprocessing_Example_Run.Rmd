@@ -1,0 +1,526 @@
+---
+title: "Vignette Preprocessing HT12-v4 Gene Expression Data"
+author: "Holger Kirsten & Carl Beuchel"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+# Gx Pre-Processing with HT12ProcessoR
+
+```{r knitr, cache = F, results = "hide", echo = F, warning = T}
+# save options
+options.backup <- options()
+
+# change line wrap to something more readable
+options(width = 80)
+
+# Set the global knitr options
+knitr::opts_chunk$set(cache = F, results = "hide", echo = T, include = T, message = T, warning = T)
+```
+
+***
+
+```{r initiate}
+# start time measurement
+time.start <- Sys.time()
+
+# load required packages
+for (i in c(
+  "HT12ProcessoR",
+  "toolboxH",
+  "lumi",
+  "knitr",
+  "here",
+  "data.table",
+  "evaluate",
+  "plotly",
+  "ggplot2",
+  "pander"
+)) {
+  suppressPackageStartupMessages(library(i, character.only = TRUE))
+}
+
+# set some basic options
+panderOptions('table.split.table', Inf)
+options(stringsAsFactors=FALSE)
+```
+
+# Preparations
+
+This example shows a typical preprocessing of ILLUMINA HT12v4 data using the package HT12ProcessoR. This can be applied for a few samples up to thousands of samples. Details on the Illumina technology can be found here: http://support.illumina.com/content/dam/illumina-marketing/documents/products/datasheets/datasheet_gene_exp_analysis.pdf
+
+This packages comes with an included example (a subset with 96 Chips from GEO accession: GSE65907). This data can be found in `r paste0(path.package("HT12ProcessoR"), "/", "extdata")`. All annotation files needed for the preprocessing are stored as an .RData object in the data/ folder of this package. For this vignette, please set a working directory (`setwd(path/to/project)`), where all files created by this package will be stored.
+
+## Check dependencies
+
+Firstly, package dependencies must be met. When installation of the package fails due to missing dependencies, please check whether you can get those dependencies via CRAN, e.g. `install.packages()` or [Bioconductor](https://www.bioconductor.org/install/). The package `toolboxH` contains convenience-functions by the package creator and can be downloaded [here](https://github.com/holgerman/toolboxH).
+
+## Prepare example files
+
+  * Start with Data from Illuminas GenomeStudio. Data should be non-normalized, non-background-substracted. Illumina organises expression data in filesets consisting of three files, a sample file with gene probe data, a control files with control probe data and a sample file with individidual-related information
+  
+  * A tab-delimeted file should be created specifying location of these three files. Following columns are required:
+  
+      + `fileset_id`: a short ID for a fileset
+      + `con_f`: full path and filename of the control probe centric data file
+      + `nobkgd_f`: full path and filename of the gene probe centric data file
+      + `sample_f`: full path and filename of the sample centric data file
+  
+  * The file should be saved in the folder intended for preprocessing the data
+
+```{r prepare.examples, echo = T}
+# check the root of your project
+# here::dr_here(show_reason = T) #  the here package makes the navigation in directories easier but works best from whitin R-Projects
+
+# get the project root directory
+# prepro.folder <- here() 
+# setwd(/path/to/project)
+prepro.folder <- getwd() # please choose a working directory
+
+# location to example data
+data.directory <- path.package("HT12ProcessoR")
+
+# create the object with the names of the input files ##
+# IDs can be chosen freely, but using terms identifying the data files might be advisable 
+my.fileset_id <- c('590-651', 'HSS106-HSS155')
+
+# create the results-folder if necessary
+dir.create(paste0(prepro.folder, "/tosend/"))
+
+# also create an obj/ folder for intermediary results
+dir.create(paste0(prepro.folder, "/obj/"))
+
+# control probe data file
+my.con_f <- c(paste0(data.directory, "/extdata/Run12_ControlProbeProfile_590-651.txt"), # control probe measurements + ercc (spike-in -- class of control probes)
+              paste0(data.directory, "/extdata/ControlProbeProfile_HSS106-HSS155.txt")) #  second example (processing batch 1 & 2)
+
+# gene probe file
+my.nobkgd_f <- c(paste0(data.directory, "/extdata/Run12_nonorm_nobkgd_590-651.txt"), # raw probe data of human gene expression 
+                 paste0(data.directory, "/extdata/Einzelanalyse_nonorm_nobkgd_HSS106-HSS155.txt"))
+
+# sample file
+my.sample_f <- c(paste0(data.directory, "/extdata/Run12_SamplesTable_590-651.txt"), # sample annotation (each measured indiviuum)
+                 paste0(data.directory, "/extdata/SamplesTable_HSS106-HSS155.txt"))
+
+# consolidate in input-file
+input <- data.table(fileset_id = my.fileset_id, 
+                    con_f = my.con_f,
+                    nobkgd_f = my.nobkgd_f,
+                    sample_f = my.sample_f)
+
+# how should the input file be called?
+input_filename <- paste0(prepro.folder, "/obj/01_file_overview.txt")
+
+# save the input file for later use
+write.table(x = input,
+            file = input_filename,
+            quote = F,
+            col.names = T,
+            row.names = F,
+            sep = "\t")
+```
+
+## Prepare parameter file
+
+Next, customize project-specific variables in a parameter file. This file is used to provide most relevant parameters in a single place for the individual preprocessing functions. Parameters will also be explained later. An example is provided with this package
+
+```{r parameter.file}
+myparams <- read.delim(paste0(data.directory, "/extdata/input_parameter_010.txt"),
+                       as.is = T)
+```
+
+Project-specific parameters that should be customized initially are:
+
+ * `file_names_of_files_and_folders`: Location of the files to preprocess; this is the `input_filename` created in the previous step
+ * `datafolder_results`: Directory, where the results of preprocessing can be stored
+ 
+```{r customize.parameter.file}
+# where is the input file we created located?
+myparams[myparams$variable == "file_names_of_files_and_folders", "value"] <- input_filename
+
+# where should the results be saved?
+myparams[myparams$variable == "datafolder_results", "value"] <- paste0(prepro.folder, "/tosend/")
+
+# where should the file be saved (overwrite the previously read-in file)
+myparamfile <- paste0(prepro.folder, "/obj/input_parameter_010.txt")
+
+# save the file again with the above changes
+write.table(myparams,
+            myparamfile,
+            quote = F,
+            col.names = T,
+            row.names = F,
+            sep="\t")
+```
+
+# Step 1 - Function `checkExtractChipsamples`: Check given expression files  and extract individuals
+
+This step does the following:
+  
+  * checks files specified in myparamfile for:
+    + are expected files present
+    + does each file have information for each sample
+    + are multiple identical IDs in different expression files present, if yes, this will be resolved according to parameter `renameDublettes`
+    + properly formated sentrix IDs for all samples present
+    + sentrix IDs for all samples present
+    + 47323 ILMN gene expression probes present in all files
+    + 883 ILMN control probes present in all files
+  * create list-object  of class **HT12prepro** including a slot with sample-related attributes of the current processing-stage named `$chipsamples`
+
+```{r pre.pro.step.1}
+# execute function for the checks described above
+prepro_ht12 <- checkExtractChipsamples(paramfile = myparamfile) # check the output of the function for details
+
+# print object in HTML-report
+pander(prepro_ht12$history)
+
+# check the class of the object
+class(prepro_ht12)
+
+# another file preview
+pander(ht(prepro_ht12$chipsamples, 1))
+```
+
+# Step 2 - Designate individuals and subgroups for preprocessing and redefine batches
+
+**Exclude samples:**
+
+  * Samples can be excluded if they should not be included in preprocessing, e.g. if they are genotyped on the same chip but are from a totally different project
+  * For this, column `old_ID` in `prepro_ht12$chipsamples` can be used, which reports the original ID used in the raw data from column `Sample ID` of the sample-file from ILLUMINA
+
+**Designate subgroups:**
+  
+  * Major subgroups that, should treated independet, of the data should be specified
+  * A typical example is if data from different tissue is preprocessed together
+  * This will force the functions that the number of detected and expressed probes as well as the Euclidian distance of all expressed probes (used to define atypical samples) are calculated subgroup-specific
+
+**Alternative treatment of subgoups:**
+
+  * Optionally, batch effect correction by function `removeBatchEffects()` can be done by preserving the subgroup contrast
+  * Additionally, up to three (nested) batches can be specified, that should reflect processing
+    + Default First-level batch is `Sentrix.Barcode`, the Chip-ID.
+    + Typically, several chips are processed together, this variable is defined as `processingbatch` - The default is the column `fileset_id` from the above file `input_filename`
+    + Finally, sometimes several runs behave differently, these might be specified in the variable `strangebatch` - default here is `0`
+
+```{r pre.pro.step.2}
+# preview first and last lines
+pander(ht(prepro_ht12$chipsamples, 2))
+
+# define samples to be excluded, e.g. when different projects are processed on the same chip
+exclude.this <- c("614", "638", "HSS 108", "HSS 112", "HSS 115", "HSS 125", "HSS 127", "HSS 133", "HSS 137", "HSS 138", "HSS 146", "HSS 151","HSS 155")
+
+# Exclude Samples by modifying the $chipsamples element
+prepro_ht12$chipsamples <- prepro_ht12$chipsamples[!prepro_ht12$chipsamples$old_ID  %in% exclude.this, ]
+
+# Define Subgroups -  in this example, sampels are from Peripheral Blood Mononuclear Cells (PBMC)
+prepro_ht12$chipsamples$subgroup <- "PBMC"
+table(prepro_ht12$chipsamples$subgroup)
+
+# show which IDs were processed in which batch
+xtabs(~prepro_ht12$chipsamples$Sentrix.Barcode + prepro_ht12$chipsamples$processingbatch)
+
+# do we have strange batches on top of regular batch structure
+xtabs(~prepro_ht12$chipsamples$strangebatch + prepro_ht12$chipsamples$processingbatch)
+
+## Quick Check for major differences based on Attributes from the provided ILLUMINA-sample-files
+initial_pca <- calcInitialPCA(prepro_ht12)
+
+# plot the results
+pca.plot <- ggplot(initial_pca$scores, aes(PC1,
+                                           PC2,
+                                           pch = subgroup,
+                                           col = processingbatch,
+                                           size = Detected.Genes..0.01.,
+                                           alpha = in_study,
+                                           label = paste(old_ID, new_ID, sep = "\n"))) +
+  geom_point() +
+  scale_alpha_manual(values = c(0.7, 0.3))
+
+# plot a static version
+pca.plot
+
+# interactive visualisation - check homogeinity etc.
+pca.plot %>% ggplotly()
+```
+  
+# Step 3 - Function `createExpressionSet()`: Create an expression set and related information from data
+
+In this step, the expression information that is scattered across many files is united in a single expression set object. This includes control probe information. 
+
+Among others, following slots will be created within the updated HT12prepro-object among others:
+
+  * a slot with  sample-related attributes of the current processing-stage named `$chipsamples`
+  * a slot with the R-object holding expression data used to create the expression set named `$rawdataWOcons_joined`
+  * a slot with the R-object holding control data used to create the expression set named `$rawdataOnlycons_joined`
+  * a slot with the R-object holding control data used to create the expression set named `$rawdataOnlycons_joined`
+  * a slot with expression-set expression data excluding control data named `$all_nobkgd_eset`
+  * a slot with expression-set expression data including control data named `$total_nobkgd_eset`
+  * a slot with the history of the commands named `$history`
+
+Additionally, integrity checks are carried out:
+
+  * check whether gene expression data and control expression data for all samples have been imported
+  * check for NAs present in gene expression and control expression data
+  * check for negative gene expression values in gene expression and control expression data and, if found, replaced with the lowest expression value found
+  * check for similar values of [ERCC](http://www.thermofisher.com/order/catalog/product/4456740) probes and housekeeping probes in gene-expression and control-expression data as Illumina reports them in both of the corresponding files
+  
+```{r pre.pro.step.3}
+# create the ExpressionSet 
+prepro_ht12 <- createExpressionSet(prepro_ht12, paramfile = myparamfile) # watch the function output
+
+# explore file output
+# show the command history
+kable(prepro_ht12$history)
+
+# preview expressionset including samples and controls
+prepro_ht12$total_nobkgd_eset
+
+# detection levels per probe
+hh(lumi::detection(prepro_ht12$total_nobkgd_eset))
+
+# expression lvl per probe
+hh(lumi::exprs(prepro_ht12$total_nobkgd_eset))
+```
+
+# Step 4 - Function `filterLowExpressed`: Filter badly expressed individuals & mark badly expressed genes
+
+This step includes:
+
+* Filter samples for extreme number of expressed transcripts and annotate transcripts for extreme numbers of samples not found to have the transcript expressed
+* Filtering samples for extreme numbers of expressed transcripts uses parameter `filter1ind_expressedGenes`as threshold for the number of interquantile ranges of the number of detected probes to be tolerated. The definition of detection is related to a ILLUMIN-defined detection p-value of 0.01
+* Annotating transcripts for having extreme numbers of samples where ´expressed´ uses parameter `filter1probes_expressedProbes`as threshold, default is 0.05
+
+Changes to the HT12prepro-object, among others, are:
+
+  * The slot with sample-related attributes of the current processing-stage named `$chipsamples` is updated 
+  * A slot with the detailed probe-related expression level informationis created named `$genesdetail`
+  * The slot with the history of the commands named `$history` is updated
+
+```{r pre.pro.step.4}
+# execute step 4 by running this function
+prepro_ht12 <- filterLowExpressed(prepro_ht12, paramfile = myparamfile)
+
+# show command history
+kable(prepro_ht12$history)
+
+# preview function output
+head(prepro_ht12$genesdetail)
+
+# show excluded samples
+setDT(prepro_ht12$chipsamples)
+prepro_ht12$chipsamples[,.N,.(in_study, reason4exclusion)]
+
+# and reset class of this object
+setDF(prepro_ht12$chipsamples)
+```
+
+# Step 5 - Functions `transformNormalizeHT12object()` and `filterTechnicallyFailed()` Transform & normalize data & filter samples for atypical control values
+
+* All expression probes (incl. control probes) of the still valid samples are log2-transformed and normalized (default: method quantile, via parameter `normalisation_method`, method `rsn` is also available)
+* meaningfull and not heavily correlated QC-parameters have to be identified to define a single combined measure representing technical performance - Default is 'hybrid_low, hybrid_med,  string_pm, string_mm, biotin, negative'
+  + if spiked in erccc is used in ALL CHIPS use also 'ercc_1, ercc_2, ercc_3, ercc_4, ercc_5'
+  + if spiked in artificial polyadenylated RNAs from Bacillus subtilis is used, also 'labeling')
+  + In case of population based studies within a single tissue also 'housekeeping, Detected.Genes..0.01.' can be included)
+* Mahalanobis distance of this control parameters is calculated and outlyers are identified defined as having a greated distance 3 interquantile ranges
+ + This number can be changed via parameter `filter2ind_atypischIlmnKontroll`
+ 
+* Within the updated HT12prepro-object, among others, following elements are subject to change:
+  + the slot with  sample-related attributes of the current processing-stage named `$chipsamples` is updated 
+  + a slot with an expression set with normalized and transformed data excluding control probe information is created: `$all_nobkgd_eset_ql`  
+  + a slot with an expression set with normalized and transformed data including control probe information is created: `$total_nobkgd_eset_ql`
+  + the slot with the history of the commands named `$history` is updated
+
+* Several QC plots are shown displaying ILLUMINAS QC-parameter
+ + See also http://www.dkfz.de/gpcf/illumina_beadchips.html for details on Illumina control probes 
+ + Within this process, Illuminas QC parameters are recalculated using the transformed and normalized data
+
+* The file __obj/s06_file_sampleattributes_in_combined_total_eset_expr_mahal.txt__ will be created, containing the sample related attributes of the current proccessing stage
+
+```{r pre.pro.step.5}
+# Transform and normalize the data with this function
+prepro_ht12 <- transformNormalizeHT12object(prepro_ht12, paramfile = myparamfile)
+
+# execute the filter step described above with this function
+prepro_ht12 <- filterTechnicallyFailed(prepro_ht12, paramfile = myparamfile)
+
+# show command execution history
+kable(prepro_ht12$history)
+```
+
+# Step 6 - Functions `filter4MinBatchsize()`, `transformNormalizeHT12object()`, and `removeBatchEffects()`: Transform and normalize still valid samples and adjust for batch-effects
+
+* All expression probes (incl. control probes) of all still valid samples are log2-transformed and normalized (method quantile), again, as this procedure depends on the set of included samples
+* Within the updated HT12prepro-object among others:
+  + The slot with sample-related attributes of the current processing-stage named `$chipsamples` is updated 
+  + A slot with an expression set with normalized and transformed and batch-corrected data including control probe information is created: `$total_nobkgd_eset_ql_combat`    
+  + The slot with the history of the commands named `$history`` is updated
+* Several QC plots are shown, also see function `ComBat()` from the [R-package sva](https://bioconductor.org/packages/release/bioc/html/sva.html) for details
+
+```{pre.pro.step.6}
+# filter for batch-size
+prepro_ht12 <- filter4MinBatchsize(prepro_ht12, paramfile = myparamfile)
+
+# repeat transformation and normalization
+# This is only necessary if samples were removed in previous step
+prepro_ht12 <- transformNormalizeHT12object(prepro_ht12, paramfile = myparamfile)
+
+# execute batch- adjustment via sva::ComBat()
+prepro_ht12 <- removeBatchEffects(prepro_ht12, paramfile = myparamfile)
+
+# review command history
+kable(prepro_ht12$history)
+```
+
+# Step 7 - Function `checkBatchEffects()`: Check for remaining batch effects 
+
+* Identification of transcripts where association with batches is still stronger than expected by chance after batch-adjustment. Stronger than chance (i.e. overinflation) is defined as association stronger p-value after Bonferroni correction
+* All batches defined in step 2 will be tested, i.e. `Sentrix.Barcode`, `processingbatch`, and - if defined - `strangebatch`
+* Probes are not filtered but annotated when found to be overinflated
+* QQ plots of association are shown
+
+* Within the updated HT12prepro-object among others, 
+  + The slot with probe-related attributes of the current processing-stage named `$genesdetail` is updated 
+  + The slot with the history of the commands named `$history` is updated
+
+```{r pre.pro.step.7}
+# check for remaining batch-effects
+prepro_ht12 <- checkBatchEffects(prepro_ht12, paramfile = myparamfile)
+
+# preview the newly created object
+ht(prepro_ht12$genesdetail, 2)
+
+# review command history
+kable(prepro_ht12$history)
+```
+
+# Step 8 - Function `filterAtypicalExpressed()`: Identify samples with atypical expression values
+
+* Filter samples for atypical gene expression levels
+  + This is defined as atypical large Euclidian distance of all expressed, not batch-associated expression probes
+* Identified Outlyers are defined as having a greated distance than 3 interquantile ranges
+  + This number can be changed via parameter `filter2ind_atypischEuklid` 
+* **!Note** that sometimes it might be meaningful to repeat correction for batch association after excluding atypical samples identified in this step
+
+* Within the updated HT12prepro-object among others, 
+  + The slot with  sample-related attributes of the current processing-stage named `$chipsamples` is updated 
+  + The slot with the history of the commands named `$history` is updated
+
+```{r pre.pro.step.8}
+# filter for atypical expression levels
+prepro_ht12 <- filterAtypicalExpressed(prepro_ht12, paramfile = myparamfile)
+
+# preview newly created output
+ht(prepro_ht12$chipsamples, 2)
+
+# review command history
+kable(prepro_ht12$history)
+```
+
+# Step 9 - Function `visualizePreprocessing()` and `comparePCBeforeAfterPrePro()`: visualization of Quality Control measures
+
+* Visualisation of control features before and after preprocessing in several plots
+* Raw data before preprocessing is log2-transformed for a more meaningful comparison
+* PCA on expression data is also done using good samples surviving preprocessing
+* Following PCAs are calculated and shown as figures:
+  + PCA of all transcripts before preprocessing, including additional scaling
+  + PCA of gene expression after preprocessing using only expression probes that are expressed, not overinflated regarding batch affects and beeing specific to the human genome when considering a remapping approach according to Barbosa-Moralis et al. (2010)
+
+* Within the updated HT12prepro-object among others, 
+  + plots are also stored in slot `$dokuobjects_visualizePreprocessing`
+  + the slot with the history of the commands named `$history` is updated
+
+```{r pre.pro.step.9}
+# create QC-plots
+prepro_ht12 <- visualizePreprocessing(prepro_ht12, paramfile = myparamfile)
+
+# PCA before/after preprocessing
+prepro_ht12 <- comparePCBeforeAfterPrePro(prepro_ht12, paramfile = myparamfile)
+
+# review command history
+kable(prepro_ht12$history)
+```
+
+# Step 10 - Function `writeFilesTosent()`: Write preprocessed data
+
+The directory of the resulting preprocessed data was specified in step *Preparations*
+
+* Individual filenames can be customized by specifying parameters:
+  + `file_sampleannot_final.txt`: default is sampleannot_HT12v4.txt --> annotation of samples
+  + `file_probeannot_final.txt`: default is	probeannot_HT12v4.txt --> annotation of probes
+  + `file_annot_final.xlsx`: default is	sampleUNDprobeannot_HT12v4.xlsx --> annotation of samples and probes as excel file
+  + `file_final_expression_set`: default is	expressionset_preprocessed.Rdata --> Preprocessed data as expression set
+  + `file_final_expression_matrix`: default is expressionmatrix_preprocessed.Rdata --> Preprocessed data as R-Matrix
+  + `file_all_transcripts_good_incl_remapping_ok`: default is	all_transcripts_good_incl_remapping_ok.txt --> IDs of probes that are considered expressed in all subgroups, have no remaining batch effect stronger than expected by chance, and are ok given a remapping approach of Barbosa-Moralis et al. (2010) -- Note that probes with a remaining batch effect might still be included in association analysis if no nominal significant correllation is found between the batch and the analysis variable of interest
+  + `file_final_expression_matrix_allProbes.txt`: default is expressionmatrix_preprocessed.txt --> Filename of expression matrix as tab delimited text file after finished preprocessing
+
+Parameter `file_renaming_samples_tosent` can specify a filename where a column named `oldname` and `newname` is provided in order to rename sample. Column `oldname` must match the names of the samples in column `new_ID`  in the `$chipsamples` data.frame included in the HT12 object. Can be empty if no renaming is required 
+
+* **!Note** that expression values are not residualised for any covariates e.g. age, sex, or any other phenotypic variable or any principal component of expression data
+
+```{r pre.pro.step.10}
+## Set parameter to use provided renaming file
+renaming_fn <- paste0(data.directory, "/extdata/renamingsamples.txt")
+
+# edit parameter file with location of renaming-file
+myparams[ myparams$variable == "file_renaming_samples_tosent", "value"] <- renaming_fn
+
+# write the parameter file
+write.table(myparams,
+            myparamfile,
+            quote = F,
+            col.names = T,
+            row.names = F,
+            sep="\t")
+
+# write result files into the tosend/ folder
+prepro_ht12 = writeFilesTosent(prepro_ht12, paramfile = myparamfile)
+
+# preview first and last line of $chipsamples object 
+ht(prepro_ht12$chipsamples, 1)
+
+# review command history
+kable(prepro_ht12$history)
+```
+
+It might be helpful, to save the HT12-object to preserve detailed information on preprocessing
+
+```{r save.rdata}
+# save an .RData object containing the final prepro_ht12 object
+save(prepro_ht12, file = paste0(prepro.folder, "/obj/prepro_example1_HT12object.RData"))
+```
+
+# Step 11 - Function `createTextForMethods()`: Information for Material and Methods section of a manuscript
+
+This function creates an extended and a short version of the preprocessing done for section Material and Methods of a publication.
+
+**Please slightly rephrase text as most journals require unique phrasing even in materials & methods section**
+
+```{r methods.text, results = "asis"}
+# create text-object
+mm_text <- createTextForMethods(prepro_ht12, paramfile = myparamfile)
+
+# preview created text as a long version
+cat('### Extended Version')
+cat(mm_text$extended_version)
+
+# preview created text as a short version
+cat('### Short Version')
+cat(mm_text$short_version)
+```
+
+**Session Info**
+
+```{r session.info, results = 'markup'}
+# output script run time
+total.time <- round(as.numeric(Sys.time() - time.start), 2)
+message("This script ran for a total of ", total.time, " minutes.")
+
+# output session info
+sessionInfo()
+```
