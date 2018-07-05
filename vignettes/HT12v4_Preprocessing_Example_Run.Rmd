@@ -21,7 +21,14 @@ options.backup <- options()
 options(width = 80)
 
 # Set the global knitr options
-knitr::opts_chunk$set(cache = F, results = "hide", echo = T, include = T, message = T, warning = T)
+knitr::opts_chunk$set(cache = F,
+                      results = "hide",
+                      echo = T,
+                      include = T,
+                      message = T,
+                      warning = T,
+                      fig.width = 10,
+                      fig.height = 6)
 ```
 
 ***
@@ -76,7 +83,7 @@ Firstly, package dependencies must be met. When installation of the package fail
 
 ```{r prepare.examples, echo = T}
 # check the root of your project
-# here::dr_here(show_reason = T) #  the here package makes the navigation in directories easier but works best from whitin R-Projects
+# here::dr_here(show_reason = T) #  the here package makes the navigation in directories easier but works best from within R-Projects
 
 # get the project root directory
 # prepro.folder <- here() 
@@ -362,7 +369,7 @@ kable(prepro_ht12$history)
   + The slot with the history of the commands named `$history`` is updated
 * Several QC plots are shown, also see function `ComBat()` from the [R-package sva](https://bioconductor.org/packages/release/bioc/html/sva.html) for details
 
-```{pre.pro.step.6}
+```{r pre.pro.step.6}
 # filter for batch-size
 prepro_ht12 <- filter4MinBatchsize(prepro_ht12, paramfile = myparamfile)
 
