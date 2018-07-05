@@ -1,10 +1,10 @@
 ---
-title: "Vignette Preprocessing HT12-v4 Gene Expression Data"
+title: "Preprocessing HT12-v4 Gene Expression Data"
 author: "Holger Kirsten & Carl Beuchel"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Preprocessing HT12-v4 Gene Expression Data}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
