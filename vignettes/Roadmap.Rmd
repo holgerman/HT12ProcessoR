@@ -13,6 +13,12 @@ editor_options:
  
  
 ## Initialisation for a clean start 
+
+```{r}
+knitr::opts_chunk$set(cache = FALSE, results = "markup", echo=T , fig.width = 9, fig.height = 6, eval = F)
+
+```
+
   
 ```{r}
 rm(list = ls())
@@ -32,7 +38,6 @@ pander::panderOptions('table.split.table', Inf)
 
 
 
-knitr::opts_chunk$set(cache = FALSE, results = "markup", echo=T , fig.width = 9, fig.height = 6, eval = TRUE)
 
 options(stringsAsFactors=FALSE)
 ```
