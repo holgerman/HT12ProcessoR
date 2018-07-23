@@ -1,10 +1,10 @@
 ---
-title: "Vignette Preprocessing HT12-v4 Gene Expression Data"
+title: "Preprocessing HT12-v4 Gene Expression Data"
 author: "Holger Kirsten & Carl Beuchel"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Preprocessing HT12-v4 Gene Expression Data}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -21,7 +21,14 @@ options.backup <- options()
 options(width = 80)
 
 # Set the global knitr options
-knitr::opts_chunk$set(cache = F, results = "hide", echo = T, include = T, message = T, warning = T)
+knitr::opts_chunk$set(cache = F,
+                      results = "hide",
+                      echo = T,
+                      include = T,
+                      message = T,
+                      warning = T,
+                      fig.width = 9,
+                      fig.height = 6)
 ```
 
 ***
@@ -55,7 +62,7 @@ options(stringsAsFactors=FALSE)
 
 This example shows a typical preprocessing of ILLUMINA HT12v4 data using the package HT12ProcessoR. This can be applied for a few samples up to thousands of samples. Details on the Illumina technology can be found here: http://support.illumina.com/content/dam/illumina-marketing/documents/products/datasheets/datasheet_gene_exp_analysis.pdf
 
-This packages comes with an included example (a subset with 96 Chips from GEO accession: GSE65907). This data can be found in `r paste0(path.package("HT12ProcessoR"), "/", "extdata")`. All annotation files needed for the preprocessing are stored as an .RData object in the data/ folder of this package. For this vignette, please set a working directory (`setwd(path/to/project)`), where all files created by this package will be stored.
+This packages comes with an included example (a subset with 96 Chips from GEO accession: GSE65907). This data can be found in `r paste0(path.package("HT12ProcessoR"), "/", "extdata")`. All annotation files needed for the preprocessing are stored as an .RData object in the data/ folder of this package. For this vignette, please set a working directory (`setwd("path/to/project"")`), where all files created by this package will be stored.
 
 ## Check dependencies
 
@@ -76,15 +83,12 @@ Firstly, package dependencies must be met. When installation of the package fail
 
 ```{r prepare.examples, echo = T}
 # check the root of your project
-# here::dr_here(show_reason = T) #  the here package makes the navigation in directories easier but works best from whitin R-Projects
+# here::dr_here(show_reason = T) #  the here package makes the navigation in directories easier but works best from within R-Projects
 
 # get the project root directory
 # prepro.folder <- here() 
 # setwd(/path/to/project)
 prepro.folder <- getwd() # please choose a working directory
-
-# location to example data
-data.directory <- path.package("HT12ProcessoR")
 
 # create the object with the names of the input files ##
 # IDs can be chosen freely, but using terms identifying the data files might be advisable 
@@ -97,16 +101,16 @@ dir.create(paste0(prepro.folder, "/tosend/"))
 dir.create(paste0(prepro.folder, "/obj/"))
 
 # control probe data file
-my.con_f <- c(paste0(data.directory, "/extdata/Run12_ControlProbeProfile_590-651.txt"), # control probe measurements + ercc (spike-in -- class of control probes)
-              paste0(data.directory, "/extdata/ControlProbeProfile_HSS106-HSS155.txt")) #  second example (processing batch 1 & 2)
+my.con_f <- c(system.file("extdata", "Run12_ControlProbeProfile_590-651.txt", package = "HT12ProcessoR"), # control probe measurements + ercc (spike-in -- class of control probes)
+              system.file("extdata", "ControlProbeProfile_HSS106-HSS155.txt", package = "HT12ProcessoR")) #  second example (processing batch 1 & 2)
 
 # gene probe file
-my.nobkgd_f <- c(paste0(data.directory, "/extdata/Run12_nonorm_nobkgd_590-651.txt"), # raw probe data of human gene expression 
-                 paste0(data.directory, "/extdata/Einzelanalyse_nonorm_nobkgd_HSS106-HSS155.txt"))
+my.nobkgd_f <- c(system.file("extdata", "Run12_nonorm_nobkgd_590-651.txt", package = "HT12ProcessoR"), # raw probe data of human gene expression 
+                 system.file("extdata", "Einzelanalyse_nonorm_nobkgd_HSS106-HSS155.txt", package = "HT12ProcessoR"))
 
 # sample file
-my.sample_f <- c(paste0(data.directory, "/extdata/Run12_SamplesTable_590-651.txt"), # sample annotation (each measured indiviuum)
-                 paste0(data.directory, "/extdata/SamplesTable_HSS106-HSS155.txt"))
+my.sample_f <- c(system.file("extdata", "Run12_SamplesTable_590-651.txt", package = "HT12ProcessoR"), # sample annotation (each measured indiviuum)
+                 system.file("extdata", "SamplesTable_HSS106-HSS155.txt", package = "HT12ProcessoR"))
 
 # consolidate in input-file
 input <- data.table(fileset_id = my.fileset_id, 
@@ -131,7 +135,8 @@ write.table(x = input,
 Next, customize project-specific variables in a parameter file. This file is used to provide most relevant parameters in a single place for the individual preprocessing functions. Parameters will also be explained later. An example is provided with this package
 
 ```{r parameter.file}
-myparams <- read.delim(paste0(data.directory, "/extdata/input_parameter_010.txt"),
+
+myparams <- read.delim(system.file("extdata", "input_parameter_010.txt", package = "HT12ProcessoR"),
                        as.is = T)
 ```
 
@@ -362,7 +367,7 @@ kable(prepro_ht12$history)
   + The slot with the history of the commands named `$history`` is updated
 * Several QC plots are shown, also see function `ComBat()` from the [R-package sva](https://bioconductor.org/packages/release/bioc/html/sva.html) for details
 
-```{pre.pro.step.6}
+```{r pre.pro.step.6}
 # filter for batch-size
 prepro_ht12 <- filter4MinBatchsize(prepro_ht12, paramfile = myparamfile)
 
@@ -465,7 +470,7 @@ Parameter `file_renaming_samples_tosent` can specify a filename where a column n
 
 ```{r pre.pro.step.10}
 ## Set parameter to use provided renaming file
-renaming_fn <- paste0(data.directory, "/extdata/renamingsamples.txt")
+renaming_fn <- system.file("extdata", "renamingsamples.txt", package = "HT12ProcessoR")
 
 # edit parameter file with location of renaming-file
 myparams[ myparams$variable == "file_renaming_samples_tosent", "value"] <- renaming_fn
