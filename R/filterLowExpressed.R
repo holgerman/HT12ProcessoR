@@ -3,7 +3,7 @@
 #' @description This function filters from an HT12prepro object samples with atypical number of expressed genes and annotates probes for their respective expression level
 
 #' @param ht12object A list object of class HT12prepro created with function createExpressionSet()
-#' @param paramfile Path to the file specifying parameters. 
+#' @param paramfile Path to the file specifying parameters.
 #' @param filter1ind_expressedGenes Filter for extreme number of 'Detected.Genes..0.01.' at detection p-value 0.01. Valid is: 'Detected.Genes..0.01.' < Median - [value]x IQR AND > Median - [value]x IQR.  If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile
 #' @param filter1probes_expressedProbes Attribute asigning an expression probe as 'expressed' if detected within at least [value]x n(individuals) at detection p-value 0.05.  If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.
 #' @return A list object of class HT12prepro  where the slot with  sample-related attributes of the current processing-stage named `$chipsamples` is updated.  Excluded individual are characterized by column in_study ==F and reason4exclusion. Additionally, a slot with the detailed probe-related expression level information named `$genesdetail is created, and the slot with the history of the commands named `$history`` is updated.
@@ -15,13 +15,13 @@
 # filter1ind_expressedGenes= "from_paramfile"
 # filter1probes_expressedProbes= "from_paramfile"
 # ht12object =  prepro_sorbv2
-# # 
+# #
 filterLowExpressed = function(ht12object,paramfile = NULL, filter1ind_expressedGenes= "from_paramfile", filter1probes_expressedProbes= "from_paramfile") {
- 
-  
+
+
 ### strings are imported as strings and not as factors
   options(stringsAsFactors=FALSE)
-  
+
 myparameters = match.call()
 showVennplots = F
 
@@ -40,7 +40,7 @@ mytable(sample_overview_l5_initial$in_study)
 sample_overview_l5 <- sample_overview_l5_initial[ sample_overview_l5_initial$in_study, ]
 dim(sample_overview_l5_initial)
 dim(sample_overview_l5)
-table(table(sample_overview_l5$new_ID)) 
+table(table(sample_overview_l5$new_ID))
 if(length(table(table(sample_overview_l5$new_ID))) != 1)
   stop("modify code, script expects ids in column new_ID!")
 
@@ -136,7 +136,7 @@ annotcon <- rename(annotcon, c(Probe_Id = "ilmn"))
 ht(annotcon, 2)
 qlist456 <- venn3(genesdetail$nuid, annotcon$nuid, ercc$nuid, plotte = showVennplots)
 par(mfrow = c(1,1))
-housekeeping_samples <- annotcon[annotcon$Reporter_Group_Name == "housekeeping", "nuid"]  
+housekeeping_samples <- annotcon[annotcon$Reporter_Group_Name == "housekeeping", "nuid"]
 # str(housekeeping_samples)
 qlist776 <- venn3(housekeeping_samples, annotcon$nuid, rownames(exprs(total_nobkgd_eset)), plotte = showVennplots)
 # str(qlist776 )
@@ -168,7 +168,9 @@ genesdetail <- moveColFront(genesdetail, 'ilmn')
 housekeeping <- genesdetail[genesdetail$is_housekeeping, "nuid"]
 housekeeping
 lumi::detection(all_nobkgd_eset)[housekeeping,1:9]  #hoher lumi::detection p wert --> wird detetktiert
-stopifnot(all(as.vector(lumi::detection(all_nobkgd_eset)[housekeeping,1:9]) > 0.7)) #cave, teilweise anders beschrieben, bei  paper archer_2010_briefings_in_bioinformatics_nov25_calling_algorithm_illumina.pdf
+if(all(as.vector(lumi::detection(all_nobkgd_eset)[housekeeping,1:9]) > 0.5)==FALSE) {
+  print(lumi::detection(all_nobkgd_eset)[housekeeping,1:9] )
+  stop("The code assumes that high detection p-values means high expressed. Old versions of illumina do not have this. Here, housekeeping genes for the first 9 samples were checked and values smaller thatn 0.5 were found - not expected, stopping... ")} #cave, teilweise anders beschrieben, bei  paper archer_2010_briefings_in_bioinformatics_nov25_calling_algorithm_illumina.pdf
 
 ## ----calcexprtranscripts-------------------------------------------------
 
@@ -176,11 +178,11 @@ if(filter1probes_expressedProbes== "from_paramfile")  minexprimiert <- as.numeri
 minexprimiert
 getPresentProbes <- function (minexprimiert, all_nobkgd_eset, total_nobkgd_eset) {
   all_pvals <- as.vector(1 - lumi::detection(all_nobkgd_eset))
-  #wieviel prozent der gene sind exprimiert  
+  #wieviel prozent der gene sind exprimiert
   check <- table(all_pvals < minexprimiert)
   check
   message("Across remaining ", dim(all_nobkgd_eset)[2], " samples from subgroup ", unique(sample_overview_l5[ sample_overview_l5$new_ID %in% Biobase::sampleNames(all_nobkgd_eset), "subgroup"]), ", ", proz(check/(sum(check)))[2], " probes are classified as expressed...")
-  length(all_pvals)  
+  length(all_pvals)
   par(mfrow  = c(1,1))
   mytitle = paste0("Distribution 1-lumi::detection-values \n ",
                    dim(all_nobkgd_eset)[1],
@@ -188,15 +190,15 @@ getPresentProbes <- function (minexprimiert, all_nobkgd_eset, total_nobkgd_eset)
                    dim(all_nobkgd_eset)[2], " inds ")
   hist(1 - lumi::detection(all_nobkgd_eset), breaks = 100, main = mytitle)
   abline(v = 0.05, col = "red")
-  
+
   # herausfinden  welche Transkripte in mehr als x% der Individuen transkribiert sind
   minind <-  minexprimiert*dim(total_nobkgd_eset)[2]
   minind <- ceiling(minind)
   minind
-  
+
   # Aufschreiben der individuenzahl, in denen das jeweilige Gen transkribiert wird
   present <-  apply(lumi::detection(total_nobkgd_eset), 1, function(x) sum(x>=(1 - minexprimiert)))
-  expressed <- present >= minind 
+  expressed <- present >= minind
   res <- c()
   res$present <- present
   res$expressed <- expressed
@@ -211,7 +213,7 @@ for(i in unique(sample_overview_l5$subgroup)) {
   newdata <- getPresentProbes(minexprimiert, all_nobkgd_eset[,subind], total_nobkgd_eset[, subind])
   var_present <- paste0("present_", reformate_subgroup(i))
   genesdetail[var_present] <- newdata$present
-  var_expressed <- paste0("expressed_", reformate_subgroup(i))  
+  var_expressed <- paste0("expressed_", reformate_subgroup(i))
   genesdetail[var_expressed] <- newdata$expressed
   suppl_info[[i]]['minind'] <- newdata$minind
 }
@@ -224,7 +226,7 @@ ht(genesdetail, 1)
 # dd
 # ee= exprmatrix[1:5, 1:6]
 # ee
-# 
+#
 # ee2 = dd * ee
 # controlzahl = apply(ee2, 1, function(x) sum(x!= 0))
 # controlzahl
@@ -233,35 +235,35 @@ ht(genesdetail, 1)
 # rowMeans(ee2, na.rm = T)
 calcMeaneEtc <- function (minexprimiert, total_nobkgd_eset, genesdetail) {
   detectframe <- lumi::detection(total_nobkgd_eset)
-  
+
   # detectframe[1:5,1:5]
   detectframe[detectframe>=(1-minexprimiert)] <- 1
   detectframe[detectframe<(1-minexprimiert)] <- 0
-  
+
   # detectframe[1:5,1:5]
   exprmatrix <- exprs(total_nobkgd_eset)
   exprmatrix2 <- detectframe * exprmatrix
   controlzahl <- apply(exprmatrix2, 1, function(x) sum(x!= 0))
   exprmatrix2[ exprmatrix2 == 0] = NA
-  meane <- apply(exprmatrix2, 1, function(x) ifelse(all(is.na(x)) == T, NA, mean(x, na.rm = T))) 
-  
-  # calc relativ expression 
-  negativ_samples <- genesdetail[genesdetail$is_negative, "nuid"]  
+  meane <- apply(exprmatrix2, 1, function(x) ifelse(all(is.na(x)) == T, NA, mean(x, na.rm = T)))
+
+  # calc relativ expression
+  negativ_samples <- genesdetail[genesdetail$is_negative, "nuid"]
   # str(negativ_samples)
   negative_sometimesmissing <- setdiff(negativ_samples, row.names(exprs(total_nobkgd_eset)))
   negative_sometimesmissing
   negativ_present <- setdiff(negativ_samples, negative_sometimesmissing)
-  length(negativ_present)   
-  negativeMean <- colMeans(exprs(total_nobkgd_eset[negativ_present,]))  
+  length(negativ_present)
+  negativeMean <- colMeans(exprs(total_nobkgd_eset[negativ_present,]))
   # str(negativeMean)
   exprmatrix2_rel <- t(t(exprmatrix2)/negativeMean)
-  
+
   # exprmatrix2_rel[1:5,1:5]
   # exprs(total_nobkgd_eset)[1:5,1:5]
   # exprmatrix2[1:5,1:5]
   # negativeMean[1:5]         #haut hin
   MeanRatioExpressed <- apply(exprmatrix2_rel, 1, function(x) ifelse(all(is.na(x)) == T, NA,mean(x, na.rm = T)))
-  # sm =  apply(exprmatrix2_rel, 1, function(x) ifelse(all(is.na(x)) == T, -1, length(na.omit(x)))) 
+  # sm =  apply(exprmatrix2_rel, 1, function(x) ifelse(all(is.na(x)) == T, -1, length(na.omit(x))))
   # table(sm)
   MaxRatioExpressed <- suppressWarnings(apply(exprmatrix2_rel, 1, function(x) ifelse(all(is.na(x)) == T, NA, max(x, na.rm = T)))) #TODO warning aufloesen
   res <- c()
@@ -287,11 +289,11 @@ for(i in unique(sample_overview_l5$subgroup)) {
   genesdetail[var_MeanRatioExpressed] <- newmeaneEtc$MeanRatioExpressed
   var_MaxRatioExpressed <- paste0("MaxRatioExpressed_", reformate_subgroup(i))
   genesdetail[var_MaxRatioExpressed] <- newmeaneEtc$MaxRatioExpressed
-  
+
   # mean ueber alle
   var_meanall <- paste0("meanall_", reformate_subgroup(i))
   genesdetail[var_meanall] <- rowMeans(exprs(total_nobkgd_eset[,subind]), na.rm=T)
-  
+
   # dokuinfo
   if(exists('negative_sometimesmissing') )  {
     negative_sometimesmissing_old <- negative_sometimesmissing
@@ -308,7 +310,7 @@ for(i in unique(sample_overview_l5$subgroup)) {
   # i = unique(sample_overview_l5$subgroup)[1]
   # message("processing subgroup '", i, "' ...\n")
   subind <- sample_overview_l5[sample_overview_l5$failedFilter_ExprimGene == F & sample_overview_l5$subgroup == i, 'new_ID']
-  
+
   # mean ueber exprimierte
   var_present <- paste0("present_", reformate_subgroup(i))
   hist(genesdetail[genesdetail$is_purecontrol == F, var_present],
@@ -328,14 +330,14 @@ abline(v = minind_sub, col = "red")
 
 ## ----specprobes----------------------------------------------------------
 # ercc vs. negatives vs. housekeeping
-negativ_samples <- genesdetail[genesdetail$is_negative, "nuid"]  
+negativ_samples <- genesdetail[genesdetail$is_negative, "nuid"]
 plotneg_ercc <- plyr::ddply(sample_overview_l5, 'subgroup', .progress = "text", function(df){
-  
+
   # df= sample_overview_l5[ sample_overview_l5$subgroup ==sample_overview_l5$subgroup[1],]
   df <- df[df$failedFilter_ExprimGene == F, ]
   ercc_expr <- as.vector((exprs(total_nobkgd_eset[ercc$nuid,df$new_ID])))
   negative_expr <- as.vector((exprs(total_nobkgd_eset[negativ_samples, df$new_ID])))
-  
+
   # str(negative_expr)
   housekeeping_expr <- as.vector((exprs(total_nobkgd_eset[ housekeeping_samples,df$new_ID])))
   plotneg_ercc_sub <- rbind(data.frame(gruppe = "ercc",
@@ -345,7 +347,7 @@ plotneg_ercc <- plyr::ddply(sample_overview_l5, 'subgroup', .progress = "text", 
                             data.frame(gruppe = "housekeeping",
                                        raw_expression = housekeeping_expr))
   plotneg_ercc_sub
-  } 
+  }
 )
 ht(plotneg_ercc)
 plotneg_ercc_bild <- ggplot(plotneg_ercc, aes(raw_expression, fill = gruppe)) +
@@ -362,14 +364,14 @@ ht(genesdetail, 3)
 
 ht12object$genesdetail = genesdetail
 
-# samples as used 
+# samples as used
 sample_overview_l6doku <- sample_overview_l5_initial
 qlist543 <- venn2(names(sample_overview_l5), names(sample_overview_l5_initial), plotte = showVennplots)
 qlist543
 for(i in qlist543$q2) {
   sample_overview_l6doku[i] <- sample_overview_l5[match_hk(sample_overview_l6doku$new_ID,
                                                            sample_overview_l5$new_ID), i]
-  
+
 }
 sample_overview_l6doku[sample_overview_l6doku$new_ID %in% bad_genenum,
                        "in_study"] = F
@@ -403,6 +405,6 @@ ht12object$dokuobjects_filterLowExpressed = lapply(fordoku, function(x) get(x))
 names(ht12object$dokuobjects_filterLowExpressed) = fordoku
 # str(ht12object$dokuobjects_filterLowExpressed)
 ht12object$history = rbind(ht12object$history, data.frame(calls = paste(Sys.time(), deparse(myparameters))))
-ht12object  
+ht12object
 
 }
