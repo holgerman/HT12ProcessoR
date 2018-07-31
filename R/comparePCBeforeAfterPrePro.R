@@ -1,7 +1,7 @@
 #' @title Visualize PCA before and after preprocessing expression levels
 #'
 #' @description PCA on expression data is done using good samples surviving preprocessing. Following PCAs are calculated and shown as figures: PCA of all transcripts before preprocessing, including additional scaling, PCA of gene expression after preprocessing using only expression probes that are expressed, not overinflated regarding batch affects and beeing specific to the human genome when considering a remapping approach according to Barbosa-Moralis et al. (2010)
-#' 
+#'
 
 #' @param ht12object A list object of class HT12prepro created with function visualizePreprocessing
 #' @param paramfile Path to the file specifying parameters
@@ -15,43 +15,43 @@
 # showPlots = T
 
 comparePCBeforeAfterPrePro = function(ht12object,paramfile = NULL,showPlots=T) {
-  
+
 ### Do you want to automatically convert strings to factor variables in a data.frame? WARNING!!! This makes your code less portable/reproducible.
 options(stringsAsFactors=FALSE)
 
   myparameters = match.call()
   showVennplots = F
-  
+
   # status checken
   historie =  ht12object$history$calls
   if(any(grepl("visualizePreprocessing", historie))==F) stop("Function 'visualizePreprocessing()' has to be run before!")
-  
+
   #laden parameter
   if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
-  
-  
-  
 
-  
+
+
+
+
 head(ilmnAnnot014allgInfos)
 
 ## ----functions-----------------------------------------------------------
 
 plotte3D <- function (tocolor, sample_overview_l10, matrix3spalt, mylabels, mysize= 1.5) {
-  
+
   farbe = factor(sample_overview_l10[match_hk(rownames(matrix3spalt), sample_overview_l10$new_ID), tocolor])
   farbentopf = rainbow(length(unique(farbe)))
   farbe = as.character(factor(farbe, labels = farbentopf) )
-  try(threejs::scatterplot3js(matrix3spalt, color=farbe, labels=mylabels, size=mysize, renderer="canvas" ))
+  try(threejs::scatterplot3js(matrix3spalt, color=farbe, labels=mylabels, size=mysize ))
 }
 
 
-sample_overview_l10 <- ht12object$chipsamples 
+sample_overview_l10 <- ht12object$chipsamples
 mytable(sample_overview_l10$in_study)
 sample_overview_l10instudy <- sample_overview_l10[ sample_overview_l10$in_study,]
 dim(sample_overview_l10)
 dim(sample_overview_l10instudy)
-table(table(sample_overview_l10instudy$new_ID)) 
+table(table(sample_overview_l10instudy$new_ID))
 if(length(table(table(sample_overview_l10instudy$new_ID))) != 1)
   stop("IDs (column new_ID) must be unique....stopping...")
 
@@ -123,7 +123,7 @@ data.pc__allinitial_scaled <- Biobase::exprs(total_nobkgd_eset[, goodind])
 data.pc__allinitial_scaled <- t(data.pc__allinitial_scaled)
 hh(data.pc__allinitial_scaled)
 dim(data.pc__allinitial_scaled)
-pc.data_allinitial_scaled <- prcomp(data.pc__allinitial_scaled,   center = T, scale. = T) 
+pc.data_allinitial_scaled <- prcomp(data.pc__allinitial_scaled,   center = T, scale. = T)
 #screeplot(pc.data_allinitial_scaled, main = "Eigenvalues")
 # str(pc.data_allinitial_scaled)
 form <- as.numeric(factor(sample_overview_l10[match_hk(rownames(data.pc__allinitial_scaled), sample_overview_l10$new_ID), "strangebatch"]))
@@ -136,7 +136,7 @@ if(showPlots) pairs(pc.data_allinitial_scaled$x[, 1:7], col = farbe,
       n_good__allinitial_scaled,
       " transcripts"))
 texte <- paste(c("Colored according subgroup ",
-                 paste(levels(farbe), 
+                 paste(levels(farbe),
                        collapse = ", "),
                  " shown in ",
                  paste(palette()[1:length(levels(farbe))],
@@ -342,7 +342,7 @@ pcs <- grep('^pc\\.', ls(), value = T)
 pcs_doku <- grep('^pc__', ls(), value = T)
 pcs_doku
 
-fordoku =  c(pcs, pcs_doku, 'goodprobes', 'n_good_dunning') 
+fordoku =  c(pcs, pcs_doku, 'goodprobes', 'n_good_dunning')
 
 stopifnot(sum(duplicated(fordoku))==0)
 
