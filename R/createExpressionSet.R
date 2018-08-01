@@ -79,7 +79,7 @@ for(i in 1:length(filestable[,1])){
 
   #bezugdatenframe zum umbennenen der IDs bauen
   spalten <- data.frame(old_colname=names(nobkgd))
-  spalten$originalid_from_colname <- sapply(stringr::str_split(as.character(spalten$old_colname), "\\.AVG_Signal|\\.Detection.Pval"), "[", 1)
+  spalten$originalid_from_colname <- stringr::str_trim(sapply(stringr::str_split(as.character(spalten$old_colname), "\\.AVG_Signal|\\.Detection.Pval"), "[", 1))
 
   # spalten$id_from_colname <- as.character(stringr::str_replace(spalten$originalid_from_colname, "^X", ""))
   spalten$id_from_colname <- as.character(spalten$originalid_from_colname)
