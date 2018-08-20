@@ -1,7 +1,7 @@
 #' @import data.table
 
 
-# Inspired from http://gettinggeneticsdone.blogspot.com/2013/06/customize-rprofile.html 
+# Inspired from http://gettinggeneticsdone.blogspot.com/2013/06/customize-rprofile.html
 
 
 ### Create a new invisible environment for all the functions to go in so it doesn't clutter your workspace.
@@ -15,14 +15,36 @@ showNA <- function(x) {
   # if(is.data.table(x)) {
   # setDT(resi2)
   # return(resi2)} else return(resi2)
-  
+
 }
 
+showNA2 = function (x, showAllNoNA = F, returnAsDataTable = F)  # faster version
+{
+  x_is_datatable = data.table::is.data.table(x)
+  if (x_is_datatable == F) {
+    x = data.table::copy(x)
+    setDT(x)
+  }
+  resi = unlist(x[, lapply(.SD, function(y) sum(is.na(y)))])
+  resi2 = data.table(var = names(resi), NAs = as.vector(resi),
+                     vals = nrow(x) - as.vector(resi))
+  if (showAllNoNA) {
+    rowsNoNA = x[, all(is.na(unlist(.SD)) == F), by = list(row.names(x))][,
+                                                                          sum(V1)]
+    resi2 = rbind(resi2, data.frame(var = "ROWS_NO_NAs",
+                                    NAs = nrow(x) - rowsNoNA, vals = rowsNoNA))
+  }
+  if (returnAsDataTable == F)
+    data.table::setDF(resi2)
+  return(resi2)
+}
+
+
 ### Show the first an last  rows  of a data frame or matrix -> 3.8.17 provided as independent function
-# ht <- function ( d, myrows=5 ) 
+# ht <- function ( d, myrows=5 )
 # { ## updated 11.3. to show all if dim 1 smaller than myrows*2
 #   rows2show = min(dim(d)[1],myrows)
-#   if(dim(d)[1] <= 2*rows2show) return(d) 
+#   if(dim(d)[1] <= 2*rows2show) return(d)
 #   rbind ( head ( d ,  rows2show ), tail ( d ,  rows2show ))
 # }
 
@@ -34,25 +56,25 @@ match_hk = function(x, y, testunique =T, makeunique = F,importcol = NULL, ...) {
   ##160616 match hk zeigt die duplikated zeilen statt mytabl falls ein Fehler kommt
   #   x = transkripte_eqtl$nuid
   #   y = ilmnAnnot013$nuid
-  
+
   yname = deparse(substitute(y))
-  
+
   # 150119 unique check auf schnelles duplicated umgestellt, auto makeuniuq
   if(testunique ==T){
     check = as.numeric(sum(duplicated(na.omit(y))))
-    if(identical(check, 0)) return(match(x, y, incomparables=c(NA, NaN),...))   
-    
+    if(identical(check, 0)) return(match(x, y, incomparables=c(NA, NaN),...))
+
     if(identical(check, 0)==F  & makeunique == F) {
       print(y[duplicated(y)])
       stop(paste(yname ,"ist nicht unique"))
     }
-    
+
     if(identical(check, 0)==F  & makeunique == T) {
-      
+
       ## try to make it nunique
       if(is.null(importcol)) stop("When asking for make unique, please provide vector with values to be imported")
       if(length(importcol) != length(y)) stop("When asking for make unique, please provide vector with values to be imported")
-      
+
       matcher = unique(data.frame(index = y, importcol = importcol))
       matcher = matcher[ matcher$index %in% x,]
       matchercheck = as.numeric(sum(duplicated(na.omit(matcher$index))))
@@ -60,22 +82,22 @@ match_hk = function(x, y, testunique =T, makeunique = F,importcol = NULL, ...) {
         print(matcher[allDuplicatedEntries(matcher$index),])
         stop(paste(yname ,"ist nicht unique after trying to make index and importcol unique..."))
       }
-      return(match(x, y, incomparables=c(NA, NaN),...))           
+      return(match(x, y, incomparables=c(NA, NaN),...))
       indinfo[match(x, y, incomparables=c(NA, NaN)),id_prepro_ge1]
-      
+
     }
-    
-    
-    
+
+
+
   }
-  if(testunique ==F)  return(match(x, y, incomparables=c(NA, NaN),...))            
+  if(testunique ==F)  return(match(x, y, incomparables=c(NA, NaN),...))
 }
 
 ## Returns a logical vector TRUE for elements of X not in Y
-`%nin%` <- function(x, y) !(x %in% y) 
+`%nin%` <- function(x, y) !(x %in% y)
 
 
-### Plot a non-proportional 2-Way, 3-Way or 4-Way Venn Diagram 
+### Plot a non-proportional 2-Way, 3-Way or 4-Way Venn Diagram
 ### http://faculty.ucr.edu/~tgirke/Documents/R_BioCond/My_R_Scripts/vennDia.R
 ### NOTE from t.girke: This script has been replaced by overLapper.R, which provides much more  powerful and scalable utilities. The new overLapper.R script is available at:   http://faculty.ucr.edu/~tgirke/Documents/R_BioCond/R_BioCondManual.html#R_graphics_venn
 
@@ -93,22 +115,22 @@ venndiagram <- function(x=x, y=y, z=z, w=w, unique=T, title="Venn Diagram", labe
       w <- unique(w); w <- as.vector(na.omit(w))
     }
   }
-  
+
   ## Check valid type selection
   if(!type %in% c("2", "2map", "3", "3map", "4", "4map", "4el", "4elmap")) {
     return("Error: the 'type' argument can only be set to one of these values: 2, 2map, 3, 3map, 4, 4map, 4el, 4elmap.")
   }
-  
+
   ## Plot a 2-way venn diagram
   if(type=="2") {
     # Define ovelap queries
     q1 <- x[x %in% y]
     q2 <- x[!x %in% y]
     q3 <- y[!y %in% x]
-    
+
     ## Store query vectors in list
     qlist <- list(q1=q1, q2=q2, q3=q3)
-    
+
     ## Perfom query counts
     count <- unlist(lapply(qlist, length))
     countDF <- data.frame(query=names(count) , count=as.vector(count))
@@ -119,18 +141,18 @@ venndiagram <- function(x=x, y=y, z=z, w=w, unique=T, title="Venn Diagram", labe
       symbols(x=c(4, 6), y = c(6, 6), circles=c(2, 2), xlim=c(0, 10), ylim=c(0, 10), inches=F, main=title, sub=mysub, xlab="", ylab="",  xaxt="n", yaxt="n", bty="n", fg=lines, ...);
       text(olDF$x, olDF$y, olDF$count, col=tcol, ...); text(c(2.0, 8.0), c(8.8, 8.8), labels[1:2], col=lcol, ...)
     }
-    
+
     ## Return query list
     return(qlist)
   }
-  
+
   ## Plot 2-way mapping venn diagram
   if(type=="2map") {
     olDFdebug <- data.frame(x=c(5.0, 3.1, 7.0), y=c(6.1, 6.1, 6.1), count=paste("q", 1:3, sep=""), ...)
     symbols(x=c(4, 6), y = c(6, 6), circles=c(2, 2), xlim=c(0, 10), ylim=c(0, 10), inches=F, main="Mapping Venn Diagram", xlab="", ylab="",  xaxt="n", yaxt="n", bty="n", fg=lines, ...);
     text(olDFdebug$x, olDFdebug$y, olDFdebug$count, col=tcol, ...); text(c(2.0, 8.0), c(8.8, 8.8), paste(labels[1:2], "=", c("x","y")), col=lcol, ...)
   }
-  
+
   ## Plot a 3-way venn diagram
   if(type=="3") {
     ## Define ovelap queries
@@ -141,10 +163,10 @@ venndiagram <- function(x=x, y=y, z=z, w=w, unique=T, title="Venn Diagram", labe
     q5 <- x[!x %in% y]; q5 <- q5[!q5 %in% z]
     q6 <- y[!y %in% z]; q6 <- q6[!q6 %in% x]
     q7 <- z[!z %in% x]; q7 <- q7[!q7 %in% y]
-    
+
     ## Store query vectors in list
     qlist <- list(q1=q1, q2=q2, q3=q3, q4=q4, q5=q5, q6=q6, q7=q7)
-    
+
     ## Perfom query counts
     count <- unlist(lapply(qlist, length))
     countDF <- data.frame(query=names(count) , count=as.vector(count))
@@ -155,18 +177,18 @@ venndiagram <- function(x=x, y=y, z=z, w=w, unique=T, title="Venn Diagram", labe
       symbols(x=c(4, 6, 5), y = c(6, 6, 4), circles=c(2, 2, 2), xlim=c(0, 10), ylim=c(0, 10), inches=F, main=title, sub=mysub, xlab="", ylab="",  xaxt="n", yaxt="n", bty="n", fg=lines, ...);
       text(olDF$x, olDF$y, olDF$count, col=tcol, ...); text(c(2.0, 8.0, 6.0), c(8.8, 8.8, 1.1), labels[1:3], col=lcol, ...)
     }
-    
+
     ## Return query list
     return(qlist)
   }
-  
+
   ## Plot 3-way mapping venn diagram
   if(type=="3map") {
     olDFdebug <- data.frame(x=c(5.0, 3.8, 6.3, 5.0, 3.0, 7.0, 5.0), y=c(5.6, 4.6, 4.6, 6.9, 6.5, 6.5, 3.0), count=paste("q", 1:7, sep=""), ...)
     symbols(x=c(4, 6, 5), y = c(6, 6, 4), circles=c(2, 2, 2), xlim=c(0, 10), ylim=c(0, 10), inches=F, main="Mapping Venn Diagram", xlab="", ylab="",  xaxt="n", yaxt="n", bty="n", fg=lines, ...);
     text(olDFdebug$x, olDFdebug$y, olDFdebug$count, col=tcol, ...); text(c(2.0, 8.0, 6.0), c(8.8, 8.8, 1.1), paste(labels[1:3], "=", c("x","y","z")), col=lcol, ...)
   }
-  
+
   ## Overlap queries for 4-way venn diagram
   if(type=="4" | type=="4el" | type=="4elmap") {
     ## Define ovelap queries
@@ -186,17 +208,17 @@ venndiagram <- function(x=x, y=y, z=z, w=w, unique=T, title="Venn Diagram", labe
     q13 <- w[!w %in% c(x,y,z)]
     q14 <- xw[!xw %in% y]; q14 <- q14[!q14 %in% z]
     q15 <- yz[!yz %in% x]; q15 <- q15[!q15 %in% w]
-    
+
     ## Store query vectors in list
     qlist <- list(q1=q1, q2=q2, q3=q3, q4=q4, q5=q5, q6=q6, q7=q7, q8=q8, q9=q9, q10=q10, q11=q11, q12=q12, q13=q13, q14=q14, q15=q15)
-    
+
     ## Perfom query counts
     count <- unlist(lapply(qlist, length))
     countDF <- data.frame(query=names(count) , count=as.vector(count))
     olDF <- data.frame(x=c(4.8, 3.9, 5.7, 3.9, 5.7, 4.8, 4.8, 3.0, 6.5, 3.0, 6.5, 3.0, 6.5, 4.8, 4.8), y=c(5.2, 4.2, 4.2, 6.3, 6.3, 7.2, 3.2, 5.2, 5.2, 7.2, 7.2, 3.2, 3.2, 1.0, 0.4), count=countDF$count)
-    
+
     if(printsub==TRUE) {mysub <- paste(paste("N unique: xyzw =", length(unique(c(x,y,z,w)))), paste("; x =", length(unique(x))), paste("; y =", length(unique(y))), paste("; z =", length(unique(z))), paste("; w =", length(unique(w))), sep="") } else { mysub <- "" }
-    
+
     ## Plot 4-way venn diagram as circles
     if(plot==T & type=="4") {
       symbols(x=c(4, 5.5, 4, 5.5), y = c(6, 6, 4.5, 4.5), circles=c(2, 2, 2, 2), xlim=c(0, 10), ylim=c(0, 10), inches=F, main=title, sub=mysub, xlab="", ylab="",  xaxt="n", yaxt="n", bty="n", fg=lines, ...);
@@ -204,7 +226,7 @@ venndiagram <- function(x=x, y=y, z=z, w=w, unique=T, title="Venn Diagram", labe
       text(c(2.0, 7.5, 2.0, 7.5), c(8.3, 8.3, 2.0, 2.0), labels, col=lcol, ...)
       text(c(3.8, 3.8), c(1.0, 0.4), c(paste("Only in ", labels[1], " & ", labels[4], ": ", olDF$count[14], sep=""), paste("Only in ", labels[2], " & ", labels[3], ": ", olDF$count[15], sep="")), col=diacol, ...)
     }
-    
+
     ## Plot 4-way venn diagram as ellipses
     if(plot==T & (type=="4el" | type=="4elmap")) {
       olDF <- data.frame(x=c(5.0, 4.2, 6.4, 3.6, 5.8, 2.9, 7.1, 3.1, 6.9, 1.5, 3.5, 6.5, 8.5, 5.0, 5.0), y=c(2.8, 1.4, 4.0, 4.0, 1.4, 5.9, 5.9, 2.2, 2.2, 4.8, 7.2, 7.2, 4.8, 0.7, 6.0), count=countDF$count)
@@ -235,18 +257,18 @@ venndiagram <- function(x=x, y=y, z=z, w=w, unique=T, title="Venn Diagram", labe
       if(type=="4el") {
         ellipseVenn(olDF=olDF, lcol=lcol, lines=lines, labels=labels, title=title, ...)
       }
-      
+
       ## Plot 4-way ellipse mapping venn diagram
       if(type=="4elmap") {
         olDFdebug <- data.frame(x=c(5.0, 4.2, 6.4, 3.6, 5.8, 2.9, 7.1, 3.1, 6.9, 1.5, 3.5, 6.5, 8.5, 5.0, 5.0), y=c(2.8, 1.4, 4.0, 4.0, 1.4, 5.9, 5.9, 2.2, 2.2, 4.8, 7.2, 7.2, 4.8, 0.7, 6.0), count=paste("q", 1:15, sep=""), ...)
         ellipseVenn(olDF=olDFdebug, lcol=lcol, lines=lines, labels=paste(labels, "=", c("x","y","z","w")), title="Mapping Venn Diagram", ...)
       }
     }
-    
+
     ## Return query list
     return(qlist)
   }
-  
+
   ## Plot 4-way circle mapping venn diagram
   if(type=="4map") {
     olDFdebug <- data.frame(x=c(4.8, 3.9, 5.7, 3.9, 5.7, 4.8, 4.8, 3.0, 6.5, 3.0, 6.5, 3.0, 6.5, 4.8, 4.8), y=c(5.2, 4.2, 4.2, 6.3, 6.3, 7.2, 3.2, 5.2, 5.2, 7.2, 7.2, 3.2, 3.2, 1.0, 0.4), count=paste("q", 1:15, sep=""), ...)
@@ -254,13 +276,13 @@ venndiagram <- function(x=x, y=y, z=z, w=w, unique=T, title="Venn Diagram", labe
     text(olDFdebug$x[1:13], olDFdebug$y[1:13], olDFdebug$count[1:13], col=tcol, ...); text(c(2.0, 7.5, 2.0, 7.5), c(8.3, 8.3, 2.0, 2.0), paste(labels, "=", c("x","y","z","w")), col=lcol, ...)
     text(c(3.8, 3.8), c(0.97, 0.36), c(paste("Only in ", labels[1], " & ", labels[4], ": ", olDFdebug$count[14], sep=""), paste("Only in ", labels[2], " & ", labels[3], ": ", olDFdebug$count[15], sep="")), col=tcol, ...)
   }
-  
+
 }
 
 
 venn2 = function(x1,y1, mytitle="2-Way Venn Diagram", mylabels = NA, plotte =T)
 {
-  # 28/2/13 plotte par    
+  # 28/2/13 plotte par
   # 150119 vector check
   if(all(is.vector(x1) | is.factor(x1),is.vector(y1)|is.factor(y1))==F) stop("All input data must be vectors...")
   if(is.na(mylabels[1])) mylabels = c(deparse(substitute(x1)), deparse(substitute(y1)))
@@ -274,7 +296,7 @@ venn3 = function(x1,y1,z1, mytitle="3-Way Venn Diagram", mylabels = NA,  plotte 
   # 28/2/13 plotte par
   # 150119 vector check
   if(all(is.vector(x1)|is.factor(x1),is.vector(y1)|is.factor(y1),is.vector(z1)|is.factor(z1))==F) stop("All input data must be vectors...")
-  
+
   if(is.na(mylabels[1])) mylabels = c(deparse(substitute(x1)), deparse(substitute(y1)), deparse(substitute(z1)))
   qlist <- venndiagram(x=x1, y=y1, z=z1, unique=T, title=mytitle, labels= mylabels, plot=plotte, lines=c(2,3,4), lcol=c(2,3,4), tcol=c(1,1,1,1,1,1,1), lwd=3, cex=1.3, printsub=T, type="3")
   qlist
@@ -285,7 +307,7 @@ venn4 = function(x1,y1,z1,w1, mytitle="4-Way Venn Diagram", mylabels = NA,  plot
   # 13/07/03
   # 150119 vector check
   if(all(is.vector(x1)|is.factor(x1),is.vector(y1)|is.factor(y1),is.vector(z1)|is.factor(z1),is.vector(w1)|is.factor(w1))==F) stop("All input data must be vectors...")
-  
+
   if(is.na(mylabels[1])) mylabels = c(deparse(substitute(x1)), deparse(substitute(y1)), deparse(substitute(z1)), deparse(substitute(w1)))
   qlist <- venndiagram(x=x1, y=y1, z=z1, w=w1, unique=T, title=mytitle, labels=mylabels,
                        plot=plotte, lines=c(2,3,4,6), lcol=c(2,3,4,6), tcol=1, lwd=3, cex=1, printsub=T, type="4el")
@@ -297,7 +319,7 @@ venn4 = function(x1,y1,z1,w1, mytitle="4-Way Venn Diagram", mylabels = NA,  plot
 # ### Show the first 5 rows and first 5 columns of a data frame or matrix --> 3.8.17 provided as independent function
 # hh = function ( d, mydims=5 ) {
 #   # 29.1.15 data.table included
-#   if("data.table" %in% class(d)) { 
+#   if("data.table" %in% class(d)) {
 #     d[1 : min(dim(d)[1],mydims), names(d)[ 1 : min(dim(d)[2],mydims)], with = F]
 #   } else   d [ 1 : min(dim(d)[1],mydims) , 1 : min(dim(d)[2],mydims) , drop =F]
 # }
@@ -314,15 +336,15 @@ write.delim = function(x, y, writeColnames=T,writeRownames = F, createDir = F, .
     pathname = paste(pathname[1:(length(pathname)-1)], collapse="/")
     vortest = try(setwd(pathname), silent=T)
     test = identical(vortest , oldwd)
-    setwd(oldwd)    
+    setwd(oldwd)
     if (test == F) {
       dir.create(pathname,recursive=T)
       message("\n...created directory ", pathname)
-      
+
     } else message("\n... directory ", pathname, " already exists...")
-    
+
   }
-  
+
   write.table(x, y, quote=F, col.names=writeColnames, row.names= writeRownames, sep="\t")
 }
 
@@ -330,7 +352,7 @@ write.delim = function(x, y, writeColnames=T,writeRownames = F, createDir = F, .
 ### table categs
 mytable = function (x, mydigits = 1, doprint = F, do_science_output = F) {
   res = c()
-  res$num <- table(x, useNA="always")   
+  res$num <- table(x, useNA="always")
   res$output = data.frame(res$num)
   names(res$output) = c("category" , "freq")
   res$output$percent = res$num /sum(res$num)
@@ -342,7 +364,7 @@ mytable = function (x, mydigits = 1, doprint = F, do_science_output = F) {
   res$output$category = zeilennamen
   if(doprint) print(res$output[,c('observed'), drop= F])
   res$output
-  
+
 }
 
 
@@ -374,7 +396,7 @@ proz = function(x, stellen = 1) paste0(round(100*x, stellen), "%")
 
 multiplot <- function(..., plotlist=NULL,  cols=1, layout=NULL) {
   ## http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
-  
+
   # Multiple plot function
   #
   # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
@@ -386,12 +408,12 @@ multiplot <- function(..., plotlist=NULL,  cols=1, layout=NULL) {
   # 3 will go all the way across the bottom.
   #
 
-  
+
   # Make a list from the ... arguments and plotlist
   plots <- c(list(...), plotlist)
-  
+
   numPlots = length(plots)
-  
+
   # If layout is NULL, then use 'cols' to determine layout
   if (is.null(layout)) {
     # Make the panel
@@ -400,20 +422,20 @@ multiplot <- function(..., plotlist=NULL,  cols=1, layout=NULL) {
     layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
                      ncol = cols, nrow = ceiling(numPlots/cols))
   }
-  
+
   if (numPlots==1) {
     print(plots[[1]])
-    
+
   } else {
     # Set up the page
     grid::grid.newpage()
     grid::pushViewport(grid::viewport(layout = grid::grid.layout(nrow(layout), ncol(layout))))
-    
+
     # Make each plot, in the correct location
     for (i in 1:numPlots) {
       # Get the i,j matrix positions of the regions that contain this subplot
       matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-      
+
       print(plots[[i]], vp = grid::viewport(layout.pos.row = matchidx$row,
                                       layout.pos.col = matchidx$col))
     }
@@ -431,7 +453,7 @@ allDuplicatedEntries <- function (vektor) {
   duplicated_entries = vektab[ myvektor %in% duplicated_vals]
   setkey(duplicated_entries, myvektor)
   duplicated_entries$num
-  
+
 }
 
 ### quickly-find-class-of-dataframe
@@ -443,7 +465,7 @@ showClassDF <- function(x) {
   rownames(resi) = as.character(resi$column)
   resi$column = NULL
   resi
-} 
+}
 
 
 formateTimediff = function(timediff, mydigits = 3) paste0(format(unclass(timediff), digits = mydigits), " ", attr(timediff, "units"))

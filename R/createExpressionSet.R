@@ -205,7 +205,13 @@ if(grepl("^Problem found", status3s02_NAexprwerte))  {
   na_ilmns_countNAs <- showNA(na_ilmns)
   ht(na_ilmns_countNAs)
   mytable(na_ilmns_countNAs$NAs)
-  ilmn2remove_NAfound <- rownames(na_ilmns_countNAs[na_ilmns_countNAs$NAs>0,,drop = F])
+  ## CHANGE start3 20.8.18
+  # ilmn2remove_NAfound <- rownames(na_ilmns_countNAs[na_ilmns_countNAs$NAs >
+  # 0, , drop = F])
+  ilmn2remove_NAfound <- na_ilmns_countNAs[na_ilmns_countNAs$NAs > 0, "var"]
+  message("removing NA- ILMNs:\n", paste(ilmn2remove_NAfound, collapse = "\n"))
+  ## CHANGE end3 20.8.18
+
   ilmn2remove_NAfound
   all_nobkgd_initial <- all_nobkgd
   all_nobkgd <- all_nobkgd[ all_nobkgd$PROBE_ID %nin% ilmn2remove_NAfound,]
@@ -475,6 +481,22 @@ for(i in 1:length(filestable[,1])){
   new_names <- spalten[is.na(spalten$sample_id_toimport) == F, "new_colname"]
   con <- con[ , c("TargetID", "ProbeID", spalten_good), with = F]
   names(con) <- c("TargetID", "ProbeID", new_names)
+
+  ## start CHANGED new chunk --> 20.8.18 check already here for duplicated columns --> do not merge them, but check for inconsistencies
+  namescheck = venn2(names(all_con), names(con), plotte = showVennplots)
+  ## check overlapping names
+  overlapping_name= setdiff(namescheck$q1, "ProbeID")
+  stopifnot(length(overlapping_name)<=1)
+  if(length(overlapping_name)==1) {
+    vgl_frame = data.table(all_con=all_con[,overlapping_name], con = con[match_hk(all_con$ProbeID, con$ProbeID), get(overlapping_name)])
+    ws_check = vgl_frame[all_con != con]
+    if(nrow(ws_check)>0) {
+      message("I found contradictions in column ", overlapping_name, " for index i = ", i, " file ", filestable[, 1][i], " with previously merged data")
+      print(ws_check)
+      stop("Stopping. Please resolve!")
+    } else con[,(overlapping_name):=NULL]
+  }
+  ## end  CHANGED new chunk --> 20.8.18
   all_con <- merge(all_con, con, by="ProbeID", all.x = T, sort = F)
   if(length(grep("NA", names(all_con))) != 0)
     stop("NA im neuen spaltennamen aufgetreten - checke skript")
@@ -542,7 +564,7 @@ checkCon_na <- table( min_nobk[grep("AVG", min_nobk$colnam), "colmin"] <0, useNA
 checkCon_na
 table(is.na(names(checkCon_na)))
 if (any(is.na(names(checkCon_na))) != 0){
-  status4s02_NAexprwerte = ("Problem found: 'NA' as control-expression value not allowed, this control probe will be removed.\n")
+  status4s02_NAexprwerte = ("Problem found: 'NA' as control-expression value not allowed, those control probe will be removed and checked again for NAs.\n")
   warning (status4s02_NAexprwerte)
 } else {status4s02_NAexprwerte = "Did not find any 'NA' value within control-expression values, no problem identified.\n";
 message(status4s02_NAexprwerte)}
@@ -553,7 +575,7 @@ if (grepl("^Problem found",status4s02_NAexprwerte)) {
   sm_checkConneg
   head(sm_checkConneg, 2)
   hh(all_con, 9)
-  sm_checkConneg2 <- all_con[, c('ProbeID', 'TargetID.x', sm_checkConneg$colnam)]
+  sm_checkConneg2 <- all_con[, c('ProbeID', 'TargetID', sm_checkConneg$colnam)] # CHANGED 20.8.18  TargetID instead of TargetID.x
   showNA(sm_checkConneg2)
   sm_checkConNA <- sm_checkConneg2[apply(sm_checkConneg2, 1, function(x) any(is.na(x))),,drop=F]
   sm_checkConNA  # NA verstanden, das sind die probes, wo eines fehlt
@@ -571,22 +593,24 @@ if (grepl("^Problem found",status4s02_NAexprwerte)) {
   rownames(na_ilmns) <- all_con$ProbeID
   na_ilmns <- t(na_ilmns)
   hh(na_ilmns)
-  na_ilmns_countNAs <- showNA(na_ilmns)
-  ht(na_ilmns_countNAs)
-  mytable(na_ilmns_countNAs$NAs)
-  ilmn2remove_NAfound <- na_ilmns_countNAs[na_ilmns_countNAs$NAs>0,"var" , drop = F]
-  ilmn2remove_NAfound
-  s04_1_rausgeflogen_weilNA <- annotcon[ annotcon$Array_Address_Id %in%ilmn2remove_NAfound$var,]
-  s04_1_rausgeflogen_weilNA
+  na_ilmns_countNAs_con <- showNA(na_ilmns)
+  ht(na_ilmns_countNAs_con)
+  mytable(na_ilmns_countNAs_con$NAs)
+  ilmn2remove_NAfound_con <- na_ilmns_countNAs_con[na_ilmns_countNAs_con$NAs>0,"var" ]
+  ilmn2remove_NAfound_con
+  message("removing NA- ILMNs from controls:\n", paste(ilmn2remove_NAfound_con, collapse = "\n"))
+
+  s04_1_rausgeflogen_weilNA <- annotcon[ annotcon$Array_Address_Id %in%ilmn2remove_NAfound_con,]
+  print(s04_1_rausgeflogen_weilNA)
   all_con_initial <- all_con
-  all_con <- all_con[all_con$ProbeID %nin% ilmn2remove_NAfound, ]
+  all_con <- all_con[all_con$ProbeID %nin% ilmn2remove_NAfound_con, ]
   dim(all_con_initial)
   dim(all_con)
 } else {
-  na_ilmns_countNAs <- data.frame(NAs = character(0))
+  na_ilmns_countNAs_con <- data.frame(NAs = character(0))
   s04_1_rausgeflogen_weilNA <- annotcon[0, ]
   sm_checkConNA <- character(0)
-  ilmn2remove_NAfound <- character(0)
+  ilmn2remove_NAfound_con <- character(0)
 }
 
 ## ----negatcheckCon2---------------------------------------------------------
@@ -605,7 +629,7 @@ message(status4s02_negativeexprwerte)}
 if (grepl("^Problem found", status4s02_negativeexprwerte)) {
   sm_checkConneg <- min_nobk[grepl("AVG", min_nobk$colnam) & (min_nobk$colmin <0 | is.na(min_nobk$colmin)), ]
   sm_checkConneg
-  sm_checkConneg2 <- all_con[, c('ProbeID', 'TargetID.x', sm_checkConneg$colnam)]
+  sm_checkConneg2 <- all_con[, c('ProbeID', 'TargetID', sm_checkConneg$colnam)]  # CHANGED 20.8.18  TargetID instead of TargetID.x
   showNA(sm_checkConneg2)
   sm_checkConNeg3 <- sm_checkConneg2[apply(sm_checkConneg2[, sapply(sm_checkConneg2, is.numeric), drop = F],
                                      1, function(x) any(is.na(x) == F & x <0)), ]
@@ -635,13 +659,13 @@ neg_indCon
 all_minexpressval <- min(apply(all_con[, grep("Signal", names(all_con))], 2, function(x) min(x[x >= 0])))
 all_minexpressval
 sample_overview_l5 <- sample_overview_l4
-if (length(neg_indCon) >0) negvalue_name2change <- grep(paste(neg_indCon, collapse = "|"), names(all_con), value = T) else negvalue_name2change = NULL
-negvalue_name2change <- negvalue_name2change[grep("Signal", negvalue_name2change)]
+if (length(neg_indCon) >0) negvalue_name2change_con <- grep(paste(neg_indCon, collapse = "|"), names(all_con), value = T) else negvalue_name2change_con = NULL
+negvalue_name2change_con <- negvalue_name2change_con[grep("Signal", negvalue_name2change_con)]
 if (length(neg_indCon) >0) {
-  negprobes <- all_con$PROBE_ID[unique(as.vector(unlist(apply(all_con[, names(all_con) %in% negvalue_name2change, drop = F], 1,
+  negprobes_con <- all_con$PROBE_ID[unique(as.vector(unlist(apply(all_con[, names(all_con) %in% negvalue_name2change_con, drop = F], 1,
                                                               function (x) which(x<0)))))] ## TODO unbedingt TESTEN
-  all_con[, names(all_con) %in% negvalue_name2change][all_con[, names(all_con) %in% negvalue_name2change]<0] = all_minexpressval
-} else negprobes = NULL
+  all_con[, names(all_con) %in% negvalue_name2change_con][all_con[, names(all_con) %in% negvalue_name2change_con]<0] = all_minexpressval
+} else negprobes_con = NULL
 dim(all_con)
 dim(sample_overview_l5)
 dim(sample_overview_l4)
@@ -660,7 +684,7 @@ if(any(grepl("TRUE", names(checkConneg))) | any(is.na(names(checkConneg))) !=0){
 } else {status4s02b_negativeexprwerte <- "Negative control-expression values or NA control-expression values do not exist anymore, no problem identified anymore.\n";
 if (grepl("^Problem found", status4s02_negativeexprwerte)) message(status4s02b_negativeexprwerte)
 }
-
+## CHANGED start 20.8.18 --> redundant columns are now removed earlier. no need for this chung anymore
 ## ----redundati-----------------------------------------------------------
 if (dim(filestable)[1]>1) {
   for( j in c("TargetID")){
@@ -683,6 +707,7 @@ if (dim(filestable)[1]>1) {
   }
   all_con$TargetID <- TargetID
 }
+## CHANGED end 20.8.18 --> redundant columns are now removed earlier. no need for this chung anymore
 
 # file ohne redundante annotationbauen
 genenames <- setdiff(names(all_con), grep("TargetID|ProbeID", names(all_con), value = T))
@@ -801,7 +826,7 @@ stopifnot(length(qlist_prerbing$q2) + length(qlist_prerbing$q3) == 0)
 total_nobkgd <- rbind(all_nobkgd2, all_con_new)
 dim(all_nobkgd2)
 dim(total_nobkgd)
-table(showNA(total_nobkgd))
+table(showNA2(total_nobkgd)$N)
 
 #welche spalten haben NA eintraege?
 ilmns_after_merge_with_NA_entries <- total_nobkgd[,1][apply(as.matrix(total_nobkgd[, sapply(total_nobkgd, is.numeric)]),
@@ -818,7 +843,8 @@ time5 <- Sys.time()
 total_nobkgd_input_fn <- tempfile()
 total_nobkgd_input_fn
 message("Writing temporary file named",total_nobkgd_input_fn," in order to create expressionset of gene probes as well as control probes via R-package lumi... ")
-write.table(total_nobkgd, total_nobkgd_input_fn, sep="\t", row.names = F, col.names = T, quote = F)
+data.table::fwrite(total_nobkgd, total_nobkgd_input_fn, sep = "\t",
+                   row.names = F, col.names = T, quote = F)
 vgl1 = venn2(total_nobkgd$PROBE_ID, all_nobkgd$PROBE_ID, plotte = showVennplots)
 vgl2 = venn2(names(total_nobkgd), names(all_nobkgd), plotte = showVennplots)
 # str(vgl2)
@@ -884,9 +910,13 @@ ht12object$chipsamples = sample_overview_l5
 tosave = c(           "neg_ind",
            "sm_checkNA",
            "negvalue_name2change",
+           "negvalue_name2change_con",
            "negprobes",
+           "negprobes_con",
            "ilmn2remove_NAfound",
+           'ilmn2remove_NAfound_con',
            "na_ilmns_countNAs",
+           "na_ilmns_countNAs_con",
            "all_nobkgd_eset_dim",
            'sample_overview_l3', "checkConneg", fordokuCon)
 
