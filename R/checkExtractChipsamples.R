@@ -518,7 +518,8 @@ qlist44 = venn2(good_columns, names(sample_overview_l), plotte = showVennplots)
 # str(qlist44)
 sample_overview_l2 = sample_overview_l[,good_columns]
 
-## ----sentrihaeurf--------------------------------------------------------
+## ----sentrihaeurf und umwandeln--------------------------------------------------------
+sample_overview_l2$Sentrix.Barcode = as.character(sample_overview_l2$Sentrix.Barcode) # neu 21.8.18 to avoid int64 class
 check_haeufigkeitSentrixIDs = table(table(sample_overview_l2$Sentrix.Barcode))
 check_haeufigkeitSentrixIDs
 if(as.numeric(max(names(check_haeufigkeitSentrixIDs), na.rm = T)) >12) warning("sentrix IDs should only have 12 indis")

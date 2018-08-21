@@ -1,14 +1,14 @@
 #' @title Identify and filter samples with unusual combination of control probes in a HT12prepro object
-#' @description log2 transformed and normalized  not heavily correlated control probes of the still valid samples are used to create a correlation-adjusted score (via the Mahalanobis distance of these parameters) reflecting technical accuracy of the expression measurement. Outlyers are identified defined as having a greater distance than `filter2ind_atypischIlmnKontroll` interquantile ranges. See vignette for an example. 
+#' @description log2 transformed and normalized  not heavily correlated control probes of the still valid samples are used to create a correlation-adjusted score (via the Mahalanobis distance of these parameters) reflecting technical accuracy of the expression measurement. Outlyers are identified defined as having a greater distance than `filter2ind_atypischIlmnKontroll` interquantile ranges. See vignette for an example.
 
 #' @param ht12object A list object of class HT12prepro created with function transformNormalizeHT12object()
 #' @param paramfile Path to the file specifying parameters
 #' @param controlparameters2check Illuminas control features used for calculation of the Mahalanobis distance based outlyer criterium. Default ist 'hybrid_low, hybrid_med,  string_pm, string_mm, biotin, negative' (if spiked in erccc is used in ALL CHIPS use also 'ercc_1, ercc_2, ercc_3, ercc_4, ercc_5', if spked in artificial polyadenylated RNAs from Bacillus subtilis immediately preceding the reverse transcription step is used, also 'labeling'). In case of population based studies within a single tissue default is also 'housekeeping, Detected.Genes..0.01.'.  If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.
 #' @param robustmethod_for_mahal Method used for calculation of robust correllation for Mahalanobis distance within function mdqc(). Previous default was "S-estimator" (which has a 25 percent breakdown point), now "MVE" is prefferred (i.e. the Minimum Volume Ellipsoid (MVE) which searches for the ellipsoid with the smallest volume that covers h data points). Alternative is "MCD" (i.e. the Minimum Covariance Determinant (MCD) estimator which looks for the subset of h data points whose covariance matrix has the smallest determinant). If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.
 #' @param filter2ind_atypischIlmnKontroll Filter for extreme combination of Illuminas control features summarized as Mahalanobis distance to an artificial sample. This artificial sample having has average values for the selected quality control features. Valid is ln('Mahalanobis distance') < median(ln('Mahalanobis distance')) + [value] *  IQR(ln('Mahalanobis distance')). If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.
-#' @return A list object of class HT12prepro including updated slot `$chipsamples` with  sample-related attributes of the current processing-stage. Excluded individual are characterized by column in_study ==F and reason4exclusion. QC plots are shown. 
+#' @return A list object of class HT12prepro including updated slot `$chipsamples` with  sample-related attributes of the current processing-stage. Excluded individual are characterized by column in_study ==F and reason4exclusion. QC plots are shown.
 #' @import data.table
-#' @import mdqc 
+#' @import mdqc
 #' @export
 
 ## debug
@@ -23,7 +23,7 @@ filterTechnicallyFailed = function(ht12object,paramfile = NULL,filter2ind_atypis
 
 ### strings are imported as strings and not as factors
   options(stringsAsFactors=FALSE)
-  
+
 myparameters = match.call()
 showVennplots = F
 
@@ -41,7 +41,7 @@ mytable(sample_overview_l6$in_study)
 sample_overview_l6instudy <- sample_overview_l6[sample_overview_l6$in_study, ]
 dim(sample_overview_l6)
 dim(sample_overview_l6instudy)
-table(table(sample_overview_l6instudy$new_ID)) 
+table(table(sample_overview_l6instudy$new_ID))
 if(length(table(table(sample_overview_l6instudy$new_ID))) != 1)
   stop("IDs (column new_ID) must be unique....stopping...")
 
@@ -53,7 +53,7 @@ subgroups
 # laden expressionsets
 total_nobkgd_eset_ql =  ht12object$total_nobkgd_eset_ql
 
-# annotcon 
+# annotcon
 # kontrollids laden
 head(annotcon)
 if('ilmn' %in% names(annotcon)) data.table::setnames(annotcon, 'ilmn', 'Probe_Id')
@@ -131,13 +131,13 @@ total_nobkgd_eset_ql_goodind
 
 ## ----investigate---------------------------------------------------------
 # str(annotcon)
-unique(annotcon$Reporter_Group_Name)  
+unique(annotcon$Reporter_Group_Name)
 unique(annotcon$Reporter_Group_id)
 annotcon[annotcon$Reporter_Group_Name == "cy3_hyb", ]
 table(table(annotcon$ilmn))
 table(table(annotcon$Array_Address_Id))
-groups <- (annotcon$Reporter_Group_Name)    
-table(groups[grep("ERCC", groups, invert = T)]) 
+groups <- (annotcon$Reporter_Group_Name)
+table(groups[grep("ERCC", groups, invert = T)])
 length(grep("^ERCC", unique(annotcon$Reporter_Group_id)))
 
 # mittelwerte aus normalisierten file herauslesen auslesen und zugaenglich machen
@@ -147,7 +147,7 @@ qlist55 <- venn2(annotcon$nuid, rownames(exprs(total_nobkgd_eset_ql)), plotte = 
 # str(qlist55)
 expr_con <- t(exprs(total_nobkgd_eset_ql[qlist55$q1,]))
 probenames <- colnames(expr_con)
-newprobenames <- genesdetail[match_hk(probenames, genesdetail$nuid), "ilmn"] 
+newprobenames <- genesdetail[match_hk(probenames, genesdetail$nuid), "ilmn"]
 ht(cbind(probenames, newprobenames))
 if(any(is.na(newprobenames)))
   stop("Some probe assignment did not work, check code on tag 147_asdfun")
@@ -155,22 +155,22 @@ table(table(newprobenames))
 colnames(expr_con) <- newprobenames
 expr_con <- data.frame(new_ID = row.names(expr_con), expr_con)
 hh(expr_con)
-dim(expr_con)  
+dim(expr_con)
 if(any(is.na(expr_con$new_ID)))
   stop("Some probe assignment did not work, check code on tag 147_asdffasfun")
 
 ## ----newmatrices---------------------------------------------------------
 # ercc details
-expr_con$ercc_1 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_1","ilmn"]]), 1, mean) 
-expr_con$ercc_2 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_2","ilmn"]]), 1, mean) 
-expr_con$ercc_3 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_3","ilmn"]]), 1, mean) 
-expr_con$ercc_4 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_4","ilmn"]]), 1, mean) 
-expr_con$ercc_5 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_5","ilmn"]]), 1, mean) 
+expr_con$ercc_1 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_1","ilmn"]]), 1, mean)
+expr_con$ercc_2 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_2","ilmn"]]), 1, mean)
+expr_con$ercc_3 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_3","ilmn"]]), 1, mean)
+expr_con$ercc_4 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_4","ilmn"]]), 1, mean)
+expr_con$ercc_5 <- apply(as.matrix(expr_con[,ercc_det[ercc_det$ercc_gruppe1short == "ercc_5","ilmn"]]), 1, mean)
 
 # hybridisation  = cy3_hyb
-expr_con$hybrid_low <- apply(as.matrix(expr_con[,c("ILMN_1343050", "ILMN_1343052")]), 1, mean) 
-expr_con$hybrid_med <- apply(as.matrix(expr_con[,c("ILMN_2038768", "ILMN_2038771")]), 1, mean) 
-expr_con$hybrid_high <- apply(as.matrix(expr_con[,c("ILMN_2038769", "ILMN_2038770")]), 1, mean) 
+expr_con$hybrid_low <- apply(as.matrix(expr_con[,c("ILMN_1343050", "ILMN_1343052")]), 1, mean)
+expr_con$hybrid_med <- apply(as.matrix(expr_con[,c("ILMN_2038768", "ILMN_2038771")]), 1, mean)
+expr_con$hybrid_high <- apply(as.matrix(expr_con[,c("ILMN_2038769", "ILMN_2038770")]), 1, mean)
 
 # plotting
 myplot <- reshape(expr_con[, c("new_ID","hybrid_low", "hybrid_med", "hybrid_high")],
@@ -207,7 +207,7 @@ myplot <- reshape(expr_con[, c("new_ID", "hybrid_medrel", "hybrid_highrel")],
                   times = c("hybrid_medrel", "hybrid_highrel"),
                   timevar="rel_hybridisation",
                   varying=list(c("hybrid_medrel", "hybrid_highrel")))
-head(myplot)    
+head(myplot)
 tail(myplot)
 hybridplot_rel <- lattice::bwplot(hybrid_medrel~factor(rel_hybridisation),
                                   data = myplot,
@@ -217,8 +217,8 @@ hybridplot_rel <- lattice::bwplot(hybrid_medrel~factor(rel_hybridisation),
 # plot(hybridplot_rel)
 
 # mismatch vs perfectmatch = low_stringency_hyb
-expr_con$string_pm <- apply(as.matrix(expr_con[,c("ILMN_2038769", "ILMN_2038770", "ILMN_2038768", "ILMN_2038771")]), 1, mean) 
-expr_con$string_mm <- apply(as.matrix(expr_con[,c("ILMN_1343061", "ILMN_1343063", "ILMN_1343062", "ILMN_1343064")]), 1, mean) 
+expr_con$string_pm <- apply(as.matrix(expr_con[,c("ILMN_2038769", "ILMN_2038770", "ILMN_2038768", "ILMN_2038771")]), 1, mean)
+expr_con$string_mm <- apply(as.matrix(expr_con[,c("ILMN_1343061", "ILMN_1343063", "ILMN_1343062", "ILMN_1343064")]), 1, mean)
 
 # plotting
 myplot <- reshape(expr_con[, c("new_ID", "string_pm", "string_mm")],
@@ -244,10 +244,10 @@ par(mfrow = c(1,1))
 
 ## biotin
 get_mean_expressionlevel <- function (congruppe) {
-  congruppe_name = deparse(substitute(congruppe))  
-  specific_samples <- annotcon[grep(congruppe, annotcon$Reporter_Group_Name, ignore.case = T), "ilmn"]  
+  congruppe_name = deparse(substitute(congruppe))
+  specific_samples <- annotcon[grep(congruppe, annotcon$Reporter_Group_Name, ignore.case = T), "ilmn"]
   message("Info: - control-category ", congruppe_name, " ", length(specific_samples), " includes following probes: ",paste(specific_samples, collapse = ", "), "\n")
-  apply(as.matrix(expr_con[, specific_samples]), 1, mean) 
+  apply(as.matrix(expr_con[, specific_samples]), 1, mean)
 }
 expr_con$biotin <- get_mean_expressionlevel("biotin")
 
@@ -261,12 +261,12 @@ expr_con$labeling <- get_mean_expressionlevel("labeling")
 expr_con$ercc <-  get_mean_expressionlevel("ercc")
 
 # negative
-specific_samples <- annotcon[annotcon$Reporter_Group_Name == "negative", "ilmn"]  
+specific_samples <- annotcon[annotcon$Reporter_Group_Name == "negative", "ilmn"]
 specific_samples
 negative_sometimesmissing <- setdiff(specific_samples, names(expr_con))
 negative_sometimesmissing
 specific_samples <- setdiff(specific_samples, negative_sometimesmissing)
-length(specific_samples)    
+length(specific_samples)
 na_check <- apply(as.matrix(expr_con[, specific_samples]), 2, function(x) any(is.na(x) == T))
 table(na_check)
 expr_con$negative <- apply(as.matrix(expr_con[, specific_samples]), 1, mean)
@@ -344,7 +344,7 @@ if(any(is.na(expr_con$p952p05)))
   stop("NA bei berechnung")
 expr_con$biotin2neg <- (expr_con$biotin - expr_con$negative)
 if(any(is.na(expr_con$biotin2neg)))
-  stop("NA bei berechnung") 
+  stop("NA bei berechnung")
 
 ## ----plotting------------------------------------------------------------
 grep("2neg", names(expr_con), value = T)
@@ -395,12 +395,12 @@ tail(myplot)
 expressionintensplot_abs <- lattice::bwplot(biotin ~ factor(exprelevels),
                                             data = myplot,
                                             xlab = "genecat",
-                                            ylab = "expression", 
+                                            ylab = "expression",
                                             ain = "illumina qc - expression in subclasses",
                                             scales = list(x = list(rot = 20)))
 # plot(expressionintensplot_abs)
 
-# allequantile quantile 
+# allequantile quantile
 plotcategories <- c("p95",
                     "p75",
                     "p50",
@@ -427,11 +427,11 @@ quantilplot <- lattice::bwplot(p95 ~ factor(exprelevels),
 
 ## ----calcMahal5, fig.width=12, fig.height=12-----------------------------
 # covarianz
-# liste aller maasse erzeugen ohne die relativen massen 
+# liste aller maasse erzeugen ohne die relativen massen
 names_save <- names(expr_con)[!names(expr_con) %in% grep("^ILMN", names(expr_con), value = T)]
-names_save <- names_save[grep("2neg", names_save, invert = T)] 
-names_save <- names_save[grep("2p05", names_save, invert = T)] 
-names_save <- names_save[grep("rel$", names_save, invert = T)] 
+names_save <- names_save[grep("2neg", names_save, invert = T)]
+names_save <- names_save[grep("2p05", names_save, invert = T)]
+names_save <- names_save[grep("rel$", names_save, invert = T)]
 names_save
 
 # a = unique(annotcon$Reporter_Group_id)
@@ -443,7 +443,7 @@ expr_con_save <- expr_con[, names_save]
 hh(expr_con_save)
 row.names(expr_con_save) <- expr_con_save$new_ID
 
-# cov berechnen    
+# cov berechnen
 expr_con_save_n <- expr_con_save
 expr_con_save_n$new_ID <- NULL
 expr_con_save_n <- scale(expr_con_save_n)
@@ -461,11 +461,11 @@ sample_overview_l6 <- merge(sample_overview_l6,
                             by.x="new_ID",
                             by.y="new_ID",
                             all.x = T,
-                            sort = F)  
+                            sort = F)
 setnames(sample_overview_l6, newQC, paste0(newQC, "_s06"))
 class(sample_overview_l6)
 ht(sample_overview_l6, 1)
-dim(sample_overview_l6)  
+dim(sample_overview_l6)
 names(sample_overview_l6)
 # plot(sample_overview_l6[grep("biot", names(sample_overview_l6), ignore.case = T)][sample_overview_l6$in_study, ])
 # plot(sample_overview_l6[grep("p05", names(sample_overview_l6), ignore.case = T)][sample_overview_l6$in_study, ])
@@ -510,7 +510,7 @@ plotcor2 <- ggplot2::ggplot(subset, ggplot2::aes(Var1, Var2, label = round(value
   ggplot2::ggtitle("Covariance of included Illumina control-QC Paramters") + ggplot2::guides(fill = F)
 plot(plotcor2 )
 
-# allequantile quantile 
+# allequantile quantile
 setdiff(noncorr_full, names(expr_con))
 plotcategories <- c(noncorr_full, "p95", "p75", "p50", "p25", "p05")
 myplot <- reshape(expr_con[, c("new_ID", plotcategories)],
@@ -538,7 +538,7 @@ row.names(expr_con_mahal) <- expr_con$new_ID
 hh(expr_con_mahal)
 head(expr_con_mahal)
 table(showNA(expr_con_mahal))
-dim(expr_con_mahal) 
+dim(expr_con_mahal)
 set.seed(1902) # manchmal scheint mdqc inconistent zu sein, kann mich aber taeuschen. starte aber mit defnierten zufallsyahlen
 
 
@@ -570,7 +570,7 @@ par(mfrow = c(1, 1))
 plotbereich <- c(1.2 * min(mahalnum, badmahalcutoff), 1.2 * max(c(mahalnum, badmahalcutoff), na.rm = T))
 hist(mahalnum, breaks = 100, main = "Distribution Mahalanobis-Distance QC-parameter", xlim = plotbereich)
 abline(v = median(mahalnum), col = "green")
-abline(v = badmahalcutoff, col = "orange")       
+abline(v = badmahalcutoff, col = "orange")
 legend("topright", legend = c("green = median", paste0("orange = cutoff (", mahalparam, "x IQR+median)")))
 # boxplot(mahalnum, main = "Verteilung Mahalanobis-Distance QC parameter", ylim = plotbereich)
 # abline(h = median(mahalnum), col = "green")
@@ -621,7 +621,7 @@ plot(allcategplot3)
 
 # wie verteilen sich die schlechten ueber die experimente
 table(sample_overview_l6[sample_overview_l6$new_ID %in% bad_mahal_inds, "fileset_id"])
-table(sample_overview_l6[sample_overview_l6$new_ID %in% bad_mahal_inds, "Sentrix.Barcode"])
+table(as.character(sample_overview_l6[sample_overview_l6$new_ID %in% bad_mahal_inds, "Sentrix.Barcode"])) # changed 21.8.18 to fix case where no bad_mahal_inds exists
 
 
 ## ----save6---------------------------------------------------------------
@@ -633,11 +633,11 @@ xtabs_hk(~sample_overview_l6$in_study + sample_overview_l6$reason4exclusion)
 # relative mahal berechnen start
 
 sample_overview_l6 = data.table::data.table(data.frame(sample_overview_l6))
-   
+
 sample_overview_l6[, mymedian := median(mahal, na.rm = T)]
 sample_overview_l6[, iqr:= IQR(mahal, na.rm = T)]
 sample_overview_l6[, mahal_relIQR := (mahal - mymedian)/iqr]
-sample_overview_l6[, range(mahal_relIQR, na.rm = T), by = in_study]
+sample_overview_l6[, suppressWarnings(range(mahal_relIQR, na.rm = T)), by = in_study] # changed 21.8.18 to fix case where no bad_mahal_inds exists
 mahalparam
 sample_overview_l6[in_study == T & (mahal_relIQR > mahalparam)]
 sample_overview_l6[in_study == T, stopifnot(max(mahal_relIQR) <= mahalparam)]
