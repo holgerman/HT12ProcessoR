@@ -7,8 +7,8 @@
 #' @param ht12object A list object of class HT12prepro created with function filterTechnicallyFailed()
 #' @param paramfile Path to the file specifying parameters
 #' @param second_combat_withvar A second round of removeBatchEffects() can be intended. In this case, batches from the first round checking Sentrix.Barcode batches as well as batches from this second round specified as a column in ht12object$chipsamples named according to this variable must be checked for minimum batch size n>1.If "", no 2nd combat will be done. If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.
-#' 
-#' @return A list object of class HT12prepro where the  slot with  sample-related attributes of the current processing-stage named `$chipsamples` is update. Excluded individual are characterized by column in_study ==F and reason4exclusion 
+#'
+#' @return A list object of class HT12prepro where the  slot with  sample-related attributes of the current processing-stage named `$chipsamples` is update. Excluded individual are characterized by column in_study ==F and reason4exclusion
 #' @import data.table
 #' @export
 
@@ -31,12 +31,13 @@ if(any(grepl("filterTechnicallyFailed", historie))==F) stop("Function 'filterTec
 #laden parameter
 if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
 
+ht12object$chipsamples = as.character(ht12object$chipsamples) ## added 22.8.18 , da int64 nicht  wie eine numerische Variable mit einem character verglichen werden kann
 sample_overview_l7pre <-ht12object$chipsamples
 mytable(sample_overview_l7pre$in_study)
 sample_overview_l7preinstudy <- sample_overview_l7pre[ sample_overview_l7pre$in_study, ]
 dim(sample_overview_l7pre)
 dim(sample_overview_l7preinstudy)
-table(table(sample_overview_l7preinstudy$new_ID)) 
+table(table(sample_overview_l7preinstudy$new_ID))
 if(length(table(table(sample_overview_l7preinstudy$new_ID))) != 1)
   stop("IDs (column new_ID) must be unique....stopping...")
 
@@ -77,7 +78,7 @@ singlbarcoders_ind
 goodind <- setdiff(goodind, singlbarcoders_ind)
 # str(goodind)
 total_nobkgd_eset_ql <- total_nobkgd_eset_ql[,goodind]
-total_nobkgd_eset_ql 
+total_nobkgd_eset_ql
 
 
 
@@ -100,7 +101,7 @@ second_combat_withvar_used
 if(second_combat_withvar_used != "") {
   message("Filtering for batch size > 1 as adjusting genexpression data in a second combat round for `",
           second_combat_withvar_used, "` is planned...")
-  
+
   # Add data
   Biobase::pData(total_nobkgd_eset_ql_combat)[,second_combat_withvar_used] <-  sample_overview_l7pre[match_hk(Biobase::pData(total_nobkgd_eset_ql_combat)$sampleID,
                                                                                                               sample_overview_l7pre$new_ID),
@@ -109,7 +110,7 @@ if(second_combat_withvar_used != "") {
   if(sum(check) != 0)
     stop("Not all individuals have a Sentrix ID!")
   ht(Biobase::pData(total_nobkgd_eset_ql_combat), 1)
-  
+
   # Exclude single barcoders
   tabled <- table(Biobase::pData(total_nobkgd_eset_ql_combat)[, second_combat_withvar_used])
   table(tabled)
@@ -132,7 +133,7 @@ ht12object$chipsamples =  sample_overview_l7pre
 all_removed_singlbarcoders = unique(na.omit(c(singlbarcoders_ind, singlbarcoders)))
 message("Removed ", length(all_removed_singlbarcoders), " samples where only a single sample was found in at least one batch. (Removed IDs: ", paste(all_removed_singlbarcoders, collapse = ", "), ")")
 
-fordoku =c(    
+fordoku =c(
   "singlbarcoders_ind",
   "singlbarcoders",
   "sample_overview_l7pre"
