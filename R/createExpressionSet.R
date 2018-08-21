@@ -684,29 +684,29 @@ if(any(grepl("TRUE", names(checkConneg))) | any(is.na(names(checkConneg))) !=0){
 } else {status4s02b_negativeexprwerte <- "Negative control-expression values or NA control-expression values do not exist anymore, no problem identified anymore.\n";
 if (grepl("^Problem found", status4s02_negativeexprwerte)) message(status4s02b_negativeexprwerte)
 }
-## CHANGED start 20.8.18 --> redundant columns are now removed earlier. no need for this chung anymore
+## CHANGED start 20.8.18 --> redundant columns are now removed earlier. no need for this chunk anymore
 ## ----redundati-----------------------------------------------------------
-if (dim(filestable)[1]>1) {
-  for( j in c("TargetID")){
-    redundant <- all_con[, grep(j, names(all_con))]
-
-    message("check whether similar fields in input data have indeed the same data (if '1', than test is ok, i.e. the same information was found accross those fields):")
-    uniquecheck <- table(length(unlist(apply(redundant, 1, function(x) unique(na.omit(x))))))
-    message(uniquecheck)   #883
-    if (uniquecheck != 1) {
-	    message(names(redundant))
-    message("Those entries are (NA-filtered):")
-    message(table(unlist(lapply(redundant, function(x) length(na.omit(x))))))
-      stop (paste("similar fields in input data have NOT the same data, found in ", j))
-    }
-    # NA (nicht alle Werte von allen Kontrollproben gefunden)  betrifft folgende IDs
-    table((sapply(all_con, function(x) any(is.na(x) == T))))
-    dim(all_con)
-    all_con[1:11,1:5]
-    assign(j, unlist(apply(redundant, 1, function(x) if(sum(is.na(x) == T) == length(x)) x = NA else unique(na.omit(x)))))
-  }
-  all_con$TargetID <- TargetID
-}
+# if (dim(filestable)[1]>1) {
+#   for( j in c("TargetID")){
+#     redundant <- all_con[, grep(j, names(all_con))]
+#
+#     message("check whether similar fields in input data have indeed the same data (if '1', than test is ok, i.e. the same information was found accross those fields):")
+#     uniquecheck <- table(length(unlist(apply(redundant, 1, function(x) unique(na.omit(x))))))
+#     message(uniquecheck)   #883
+#     if (uniquecheck != 1) {
+# 	    message(names(redundant))
+#     message("Those entries are (NA-filtered):")
+#     message(table(unlist(lapply(redundant, function(x) length(na.omit(x))))))
+#       stop (paste("similar fields in input data have NOT the same data, found in ", j))
+#     }
+#     # NA (nicht alle Werte von allen Kontrollproben gefunden)  betrifft folgende IDs
+#     table((sapply(all_con, function(x) any(is.na(x) == T))))
+#     dim(all_con)
+#     all_con[1:11,1:5]
+#     assign(j, unlist(apply(redundant, 1, function(x) if(sum(is.na(x) == T) == length(x)) x = NA else unique(na.omit(x)))))
+#   }
+#   all_con$TargetID <- TargetID
+# }
 ## CHANGED end 20.8.18 --> redundant columns are now removed earlier. no need for this chung anymore
 
 # file ohne redundante annotationbauen
