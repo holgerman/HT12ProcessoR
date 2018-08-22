@@ -31,7 +31,7 @@ if(any(grepl("filterTechnicallyFailed", historie))==F) stop("Function 'filterTec
 #laden parameter
 if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
 
-ht12object$chipsamples = as.character(ht12object$chipsamples) ## added 22.8.18 , da int64 nicht  wie eine numerische Variable mit einem character verglichen werden kann
+ht12object$chipsamples$Sentrix.Barcode = as.character(ht12object$chipsamples$Sentrix.Barcode) ## added 22.8.18 , da int64 nicht  wie eine numerische Variable mit einem character verglichen werden kann
 sample_overview_l7pre <-ht12object$chipsamples
 mytable(sample_overview_l7pre$in_study)
 sample_overview_l7preinstudy <- sample_overview_l7pre[ sample_overview_l7pre$in_study, ]
@@ -70,9 +70,9 @@ message("Filtering for batch size > 1 for Sentrix IDs...")
 
 tabled <- table(Biobase::pData(total_nobkgd_eset_ql)$hybridisierungchipserialnumber)
 table(tabled)
-singlbarcoders <- names(tabled[tabled == 1])
-singlbarcoders
-singlbarcoders_ind <- sample_overview_l7preinstudy[sample_overview_l7preinstudy$Sentrix.Barcode %in% singlbarcoders, "new_ID"]
+singlbarcoders_chips <- names(tabled[tabled == 1])
+singlbarcoders_chips
+singlbarcoders_ind <- sample_overview_l7preinstudy[sample_overview_l7preinstudy$Sentrix.Barcode %in% singlbarcoders_chips, "new_ID"]
 singlbarcoders_ind
 # str(goodind)
 goodind <- setdiff(goodind, singlbarcoders_ind)
@@ -130,12 +130,12 @@ mytable(sample_overview_l7pre$reason4exclusion)
 mytable(sample_overview_l7pre$in_study)
 ht12object$chipsamples =  sample_overview_l7pre
 
-all_removed_singlbarcoders = unique(na.omit(c(singlbarcoders_ind, singlbarcoders)))
+all_removed_singlbarcoders = unique(na.omit(singlbarcoders_ind)) # fix 22.8.18
 message("Removed ", length(all_removed_singlbarcoders), " samples where only a single sample was found in at least one batch. (Removed IDs: ", paste(all_removed_singlbarcoders, collapse = ", "), ")")
 
 fordoku =c(
   "singlbarcoders_ind",
-  "singlbarcoders",
+  "singlbarcoders_chips",
   "sample_overview_l7pre"
 )
 
