@@ -14,14 +14,14 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
   if(n_bigbatch==1) message("No different batches present for the processingbatch") else message("Found ", n_bigbatch, " different processingbatches ...")
 
   n_strangebatch = length(unique(pData(total_nobkgd_eset_ql)$strangebatch))
-  if(n_strangebatch==1) message("No different batches present assigned as specialbatches") else message("Found ", n_strangebatch, " different specialbatches (i.e. custom annotated in s02...Rmd) ...")
+  if(n_strangebatch<=1) message("No different batches present assigned as specialbatches") else message("Found ", n_strangebatch, " different specialbatches (i.e. custom annotated in s02...Rmd) ...")
 
 
   if (adjust4subgroup == T) {
 
     message("... acounting for covariate `subgroup` in ANOVA ...")
 
-    if (n_sentrix <= 1) {
+    if (n_sentrix == 1) {
       all_pval_before_sentrix = rep(x = 1, times = nrow(exprs(total_nobkgd_eset_ql)))
       all_pval_after_sentrix = rep(x = 1, times = nrow(exprs(total_nobkgd_eset_ql_combat)))
 
@@ -105,7 +105,7 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
       # str(all_pval_after_bigbatch)
     }
 
-    if (n_strangebatch == 1) {
+    if (n_strangebatch<=1) {
       all_pval_before_strangebatch = rep(x = 1, times = nrow(exprs(total_nobkgd_eset_ql)))
       all_pval_after_strangebatch = rep(x = 1, times = nrow(exprs(total_nobkgd_eset_ql_combat)))
 
@@ -144,7 +144,7 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
   } else {
     message("... not adjusting ANOVA for subgroup ...")
 
-    if (n_sentrix <= 1) {
+    if (n_sentrix == 1) {
       all_pval_before_sentrix = rep(x = 1, times = nrow(exprs(total_nobkgd_eset_ql)))
       all_pval_after_sentrix = rep(x = 1, times = nrow(exprs(total_nobkgd_eset_ql_combat)))
 
@@ -199,7 +199,7 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
       # str(all_pval_after_bigbatch)
     }
 
-    if (n_strangebatch == 1) {
+    if (n_strangebatch<=1) {
       all_pval_before_strangebatch = rep(x = 1, times = nrow(exprs(total_nobkgd_eset_ql)))
       all_pval_after_strangebatch = rep(x = 1, times = nrow(exprs(total_nobkgd_eset_ql_combat)))
 
