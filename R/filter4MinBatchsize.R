@@ -31,7 +31,7 @@ if(any(grepl("filterTechnicallyFailed", historie))==F) stop("Function 'filterTec
 #laden parameter
 if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
 
-ht12object$chipsamples$Sentrix.Barcode = as.character(ht12object$chipsamples$Sentrix.Barcode) ## added 22.8.18 , da int64 nicht  wie eine numerische Variable mit einem character verglichen werden kann
+ht12object$chipsamples$Sentrix.Barcode = as.character(ht12object$chipsamples$Sentrix.Barcode) ## added 22.8.18 , da int64 nicht  wie eine numerische Variable mit einem character verglichen werden kann, sollte aber bereits character sein, sicherheitsmassnahme
 sample_overview_l7pre <-ht12object$chipsamples
 mytable(sample_overview_l7pre$in_study)
 sample_overview_l7preinstudy <- sample_overview_l7pre[ sample_overview_l7pre$in_study, ]
