@@ -31,6 +31,9 @@ if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
 laengeilmn = dim(allilmn)[1]
 if(laengeilmn != 47323) stop("47323 ilmn-IDs aus file 'data/all47323ilmn.rda' wurden nicht richtig geladen")
 
+
+if("strange_batch" %nin% names(ht12object$chipsamples)) ht12object$chipsamples$strange_batch = "none"
+
 sample_overview_l3_initial = ht12object$chipsamples
 
 dim(sample_overview_l3_initial)
