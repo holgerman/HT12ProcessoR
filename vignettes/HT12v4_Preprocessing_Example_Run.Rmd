@@ -451,7 +451,7 @@ prepro_ht12 <- comparePCBeforeAfterPrePro(prepro_ht12, paramfile = myparamfile)
 kable(prepro_ht12$history)
 ```
 
-# Step 10 - Function `writeFilesTosent()`: Write preprocessed data
+# Step 10 - Function `writeFilesTosend()`: Write preprocessed data
 
 The directory of the resulting preprocessed data was specified in step *Preparations*
 
@@ -464,7 +464,7 @@ The directory of the resulting preprocessed data was specified in step *Preparat
   + `file_all_transcripts_good_incl_remapping_ok`: default is	all_transcripts_good_incl_remapping_ok.txt --> IDs of probes that are considered expressed in all subgroups, have no remaining batch effect stronger than expected by chance, and are ok given a remapping approach of Barbosa-Moralis et al. (2010) -- Note that probes with a remaining batch effect might still be included in association analysis if no nominal significant correllation is found between the batch and the analysis variable of interest
   + `file_final_expression_matrix_allProbes.txt`: default is expressionmatrix_preprocessed.txt --> Filename of expression matrix as tab delimited text file after finished preprocessing
 
-Parameter `file_renaming_samples_tosent` can specify a filename where a column named `oldname` and `newname` is provided in order to rename sample. Column `oldname` must match the names of the samples in column `new_ID`  in the `$chipsamples` data.frame included in the HT12 object. Can be empty if no renaming is required 
+Parameter `file_renaming_samples_tosend` can specify a filename where a column named `oldname` and `newname` is provided in order to rename sample. Column `oldname` must match the names of the samples in column `new_ID`  in the `$chipsamples` data.frame included in the HT12 object. Can be empty if no renaming is required 
 
 * **!Note** that expression values are not residualised for any covariates e.g. age, sex, or any other phenotypic variable or any principal component of expression data
 
@@ -473,7 +473,7 @@ Parameter `file_renaming_samples_tosent` can specify a filename where a column n
 renaming_fn <- system.file("extdata", "renamingsamples.txt", package = "HT12ProcessoR")
 
 # edit parameter file with location of renaming-file
-myparams[ myparams$variable == "file_renaming_samples_tosent", "value"] <- renaming_fn
+myparams[ myparams$variable == "file_renaming_samples_tosend", "value"] <- renaming_fn
 
 # write the parameter file
 write.table(myparams,
@@ -484,7 +484,7 @@ write.table(myparams,
             sep="\t")
 
 # write result files into the tosend/ folder
-prepro_ht12 = writeFilesTosent(prepro_ht12, paramfile = myparamfile)
+prepro_ht12 = writeFilesTosend(prepro_ht12, paramfile = myparamfile)
 
 # preview first and last line of $chipsamples object 
 ht(prepro_ht12$chipsamples, 1)

@@ -44,12 +44,12 @@ options(stringsAsFactors=FALSE)
 # here::dr_here(show_reason = T) #  the here package makes the navigation in directories easier but works best from within R-Projects
 
 # get the project root directory
-# prepro.folder <- here() 
+# prepro.folder <- here()
 # setwd(/path/to/project)
 prepro.folder <- getwd() # please choose a working directory
 
 # create the object with the names of the input files ##
-# IDs can be chosen freely, but using terms identifying the data files might be advisable 
+# IDs can be chosen freely, but using terms identifying the data files might be advisable
 my.fileset_id <- c('590-651', 'HSS106-HSS155')
 
 # create the results-folder if necessary
@@ -63,7 +63,7 @@ my.con_f <- c(system.file("extdata", "Run12_ControlProbeProfile_590-651.txt", pa
               system.file("extdata", "ControlProbeProfile_HSS106-HSS155.txt", package = "HT12ProcessoR")) #  second example (processing batch 1 & 2)
 
 # gene probe file
-my.nobkgd_f <- c(system.file("extdata", "Run12_nonorm_nobkgd_590-651.txt", package = "HT12ProcessoR"), # raw probe data of human gene expression 
+my.nobkgd_f <- c(system.file("extdata", "Run12_nonorm_nobkgd_590-651.txt", package = "HT12ProcessoR"), # raw probe data of human gene expression
                  system.file("extdata", "Einzelanalyse_nonorm_nobkgd_HSS106-HSS155.txt", package = "HT12ProcessoR"))
 
 # sample file
@@ -71,7 +71,7 @@ my.sample_f <- c(system.file("extdata", "Run12_SamplesTable_590-651.txt", packag
                  system.file("extdata", "SamplesTable_HSS106-HSS155.txt", package = "HT12ProcessoR"))
 
 # consolidate in input-file
-input <- data.table(fileset_id = my.fileset_id, 
+input <- data.table(fileset_id = my.fileset_id,
                     con_f = my.con_f,
                     nobkgd_f = my.nobkgd_f,
                     sample_f = my.sample_f)
@@ -164,7 +164,7 @@ pca.plot
 pca.plot %>% ggplotly()
 
 ## ----pre.pro.step.3-----------------------------------------------------------
-# create the ExpressionSet 
+# create the ExpressionSet
 prepro_ht12 <- createExpressionSet(prepro_ht12, paramfile = myparamfile) # watch the function output
 
 # explore file output
@@ -256,7 +256,7 @@ kable(prepro_ht12$history)
 renaming_fn <- system.file("extdata", "renamingsamples.txt", package = "HT12ProcessoR")
 
 # edit parameter file with location of renaming-file
-myparams[ myparams$variable == "file_renaming_samples_tosent", "value"] <- renaming_fn
+myparams[ myparams$variable == "file_renaming_samples_tosend", "value"] <- renaming_fn
 
 # write the parameter file
 write.table(myparams,
@@ -267,9 +267,9 @@ write.table(myparams,
             sep="\t")
 
 # write result files into the tosend/ folder
-prepro_ht12 = writeFilesTosent(prepro_ht12, paramfile = myparamfile)
+prepro_ht12 = writeFilesTosend(prepro_ht12, paramfile = myparamfile)
 
-# preview first and last line of $chipsamples object 
+# preview first and last line of $chipsamples object
 ht(prepro_ht12$chipsamples, 1)
 
 # review command history
