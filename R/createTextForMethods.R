@@ -1,6 +1,6 @@
 #' @title Create Text for Material and Methods to report preprocessing
 #' @description Creates Text for Material and Methods to report preprocessing
-#' @param ht12object A list object of class HT12prepro 
+#' @param ht12object A list object of class HT12prepro
 #' @param paramfile Path to the file specifying parameters
 #' @return an object with a markdown formated short and long text describing preprocessing
 
@@ -8,51 +8,51 @@
 #' @export
 
 ## debug
-# ht12object = prepro_ht12; paramfile=myparamfile  
+# ht12object = prepro_ht12; paramfile=myparamfile
 
 createTextForMethods <- function(ht12object,paramfile) {
-  
+
   param <- read.delim(paramfile, as.is = T)
-  
-  
+
+
   chipsamples = ht12object$chipsamples
   data.table::setDT(chipsamples)
-  
+
   sample_overview_l3 = ht12object$dokuobjects_createExpressionSet$sample_overview_l3
   data.table::setDT(sample_overview_l3)
   givenind_n = sample_overview_l3[is.na(reason4exclusion),.N ]
-  
+
   noncorr = ht12object$dokuobjects_filterTechnicallyFailed$noncorr
   head(categmahal)
   stopifnot(all(noncorr %in% categmahal$short))
   categmahalused = categmahal[ short %in% noncorr,sort(unique(long))]
-  
+
   bad_mahal_inds = ht12object$dokuobjects_filterTechnicallyFailed$bad_mahal_inds
   badmahal_n = length(bad_mahal_inds)
-  
+
   singlbarcoders_ind = ht12object$dokuobjects_filter4MinBatchsize$singlbarcoders_ind
   singlbarcoders_ind_n = length(singlbarcoders_ind)
   num_bad_euklid = ht12object$dokuobjects_filterAtypicalExpressed$num_bad_euklid
   badeuklid_n = sum(suppressWarnings(na.omit(as.numeric(unlist(num_bad_euklid)))))
-  
-  
+
+
   probeannot =ht12object$genesdetail
   data.table::setDT(probeannot)
-  
+
   all_probes_n = dim(probeannot)[1]
-  
-  
-  
+
+
+
   all_geneprobes_n = sum(grepl("transcr", probeannot$Probe_Class))
   all_controlprobes_n = sum(grepl("control", probeannot$Probe_Class))
   all_geneprobes_extracted_n = probeannot[is.na(is_purecontrol)==F, sum(grepl("transcr", Probe_Class))]
   all_controlprobes_extracted_n = probeannot[is.na(is_purecontrol)==F, sum(grepl("control", Probe_Class))]
-  
-  
+
+
   mytable(probeannot$Probe_Class)
-  
+
   xtabs_hk(~probeannot$Probe_Class +probeannot$is_purecontrol )
-  
+
   expressedprobecols <- grep(paste(c("^expressed"), collapse = "|"), names(probeannot), value = T)
   expressedprobecols
   showme <- data.frame(eval(expr = parse(text = paste0("with(probeannot, xtabs_hk(~is_purecontrol + is_ercc +",
@@ -61,35 +61,35 @@ createTextForMethods <- function(ht12object,paramfile) {
   probeannot$expressedprobe_allsubgroups = apply(probeannot[, expressedprobecols,
                                                             with = F], 1,
                                                  function(x) all(x == T))
-  
-  
+
+
   transcript_expressedprobe_allsubgroups_n = sum(probeannot$expressedprobe_allsubgroups & (probeannot$is_purecontrol ==F), na.rm = T)
-  
-  
+
+
   transcript_excluded_ilmn = probeannot[(probeannot$all_pval_after_bigbatch_bf | probeannot$all_pval_after_sentrix_bf) & probeannot$is_purecontrol==F, ilmn]
   transcript_excluded_ilmn_n = length(transcript_excluded_ilmn)
-  
+
   subgroups = chipsamples[,unique(subgroup)]
   zahlsugbrupp = table(sample_overview_l3[ is.na(sample_overview_l3$reason4exclusion),subgroup])
-  
+
   euklidtextfak = paste0('This was done separately for subgroups ',paste(names(zahlsugbrupp), collapse = " / "), ", initially including ",paste(huebsch(as.numeric(zahlsugbrupp)), collapse = " / "), ' individuals, respectively.')
-  
+
   expresstext = paste0('This was done separately for subgroups ',  paste(subgroups, collapse = ' / '), ". ")
-  
+
   combattextfak = paste0('Thereby, subgroups ',  paste(subgroups, collapse = '/ '), ' were included as covariates in order to protect differences between subgroups in the expression data. This was possible as no strong imbalancies between batches and subgroups were observed [PMID:26272994]')
   anovatextfak = paste0('Again, this analysis used subgroups ',  paste(subgroups, collapse = ' / '), ' as covariates.')
-  
+
   zahlsugbrupp_fin = table(chipsamples[ chipsamples$in_study ==T,subgroup])
-  
+
   finasubgroupind_fak = paste0('Finally included samples comprised of subgroups ',paste(names(zahlsugbrupp_fin), collapse = " / "), " including ",paste(huebsch(as.numeric(zahlsugbrupp_fin)), collapse = " / "), ' individuals, respectively.')
-  
-  
+
+
   anova_with_special_batch = ht12object$dokuobjects_checkBatchEffect$anova_with_special_batch
-  
+
   more_than_1subgroup = length(subgroups) > 1
-  
+
   dim_total_nobkgd_eset_ql_combat = dim(ht12object$total_nobkgd_eset_ql_combat)
-  
+
   bad_genenum = ht12object$dokuobjects_filterLowExpressed$bad_genenum
   numgen_cutoff = ht12object$dokuobjects_filterLowExpressed$numgen_cutoff
   minexprimiert =  ht12object$dokuobjects_filterLowExpressed$minexprimiert
@@ -99,9 +99,9 @@ createTextForMethods <- function(ht12object,paramfile) {
   filter2ind_atypischIlmnKontroll =  ht12object$dokuobjects_filterTechnicallyFailed$mahalparam
   save_subgroupcontrast = ht12object$dokuobjects_removeBatchEffects$save_subgroupcontrast_used
   outlierCriteriumEuklid  =ht12object$dokuobjects_filterAtypicalExpressed$outlierCriteriumEuklid
-  good_entrez = ht12object$dokuobjects_writeFilesTosent$good_entrez
-  
-  
+  good_entrez = ht12object$dokuobjects_writeFilesTosend$good_entrez
+
+
 longtext_1 = paste0(" Raw data of all ",huebsch(all_geneprobes_n)," gene-expression probes and ", huebsch(all_controlprobes_n), " control probes was extracted by Illumina GenomeStudio without additional background correction. ",huebsch(dim_total_nobkgd_eset_ql_combat[1])," probes (",huebsch(all_geneprobes_extracted_n)," gene-expression probes and ",huebsch(all_controlprobes_extracted_n)," control probes) could be successfully imputed in a total of ",huebsch(givenind_n)," included samples.\n Data was further processed within R/ Bioconductor R `[PMID:15461798]`.\n\n")
 
 longtext_2 = paste0("Initially, ", huebsch(length(bad_genenum))," (",proz(length(bad_genenum)/givenind_n),") samples having an extreme number of expressed genes (defined as median ± ",numgen_cutoff," x interquartile ranges (IQR) of the cohort's values) were excluded. ",if(more_than_1subgroup) capture.output(pander::pander(euklidtextfak)), "\nTranscripts not expressed at p = 0.05 (as defined by Illumina and implemented in the R / Bioconductor package `lumi` `[PMID:18467348]`) in at least ",proz(as.numeric(minexprimiert))," of all samples were excluded from further analysis. ", if(more_than_1subgroup) capture.output(pander::pander(expresstext)), huebsch(transcript_expressedprobe_allsubgroups_n), " (", proz(transcript_expressedprobe_allsubgroups_n/all_geneprobes_n), ") probes remained in analysis ",if(more_than_1subgroup) capture.output(pander::pander('in all subgroups.')), ".\n\n")
@@ -136,6 +136,5 @@ res$extended_version = longtext
 res$short_version = shorttext
 res
 }
-                                                                                                                                            
-                                                                                                                                            
-                                                                                                                                            
+
+
