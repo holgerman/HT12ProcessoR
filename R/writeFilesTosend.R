@@ -1,11 +1,11 @@
 #' @title Writes File used for follow up analyses in a folder
 #'
-#' @description Save the preprocessed data in a folder for further using filenames specified as parameters. Parameter `file_renaming_samples_tosent` can specify a filename where a column named `oldname` and `newname` is provided in order to rename sample. Column oldname must match the names of the samples in column new_ID  in the `$chipsamples` data.frame included in the HT12 object. Can be empty if no renaming is required 
+#' @description Save the preprocessed data in a folder for further using filenames specified as parameters. Parameter `file_renaming_samples_tosend` can specify a filename where a column named `oldname` and `newname` is provided in order to rename sample. Column oldname must match the names of the samples in column new_ID  in the `$chipsamples` data.frame included in the HT12 object. Can be empty if no renaming is required
 
 #' @param ht12object A list object of class HT12prepro created with function checkExtractChipsamples
 #' @param paramfile Path to the file specifying parameters
 #' @param datafolder_results directory of the resulting preprocessed data
-#' 
+#'
 #' @param file_sampleannot_final.txt default is	sampleannot_HT12v4.txt Filename for sample-related attributes after finished preprocessing
 #' @param file_probeannot_final.txt Filename for expression probe-related attributes after finished preprocessing
 #' @param file_annot_final.xlsx Filename for an excel file combining 'file_sampleannot_final.txt' and 'file_probeannot_final.txt'.
@@ -13,7 +13,7 @@
 #' @param file_final_expression_matrix Filename of expression matrix as R object after finished preprocessing
 #' @param file_all_transcripts_good_incl_remapping_ok Filename where probes are listed that are classified as expressed, not over-inflated for batch effects and classified at least 'good' according to remapping on the human genome as described in Nucleic Acids Res. Januar 2010;38(3):e17. in all user-provided subgroups
 #' @param file_final_expression_matrix_allProbes.txt Filename of expression matrix as tab delimited text file after finished preprocessing
-#' @param file_renaming_samples_tosent Filename where a column named `oldname` and `newname` is provided in order to rename samples, column oldname must match the names of the sample in column new_ID  in the `chipsamples` data.frame. Can be empty if no renaming is required
+#' @param file_renaming_samples_tosend Filename where a column named `oldname` and `newname` is provided in order to rename samples, column oldname must match the names of the sample in column new_ID  in the `chipsamples` data.frame. Can be empty if no renaming is required
 
 
 #' @return Written files defined in the parameters
@@ -30,14 +30,14 @@
 # file_final_expression_matrix = "from_paramfile"
 # file_all_transcripts_good_incl_remapping_ok = "from_paramfile"
 # file_final_expression_matrix_allProbes.txt = "from_paramfile"
-# file_renaming_samples_tosent = "from_paramfile"
+# file_renaming_samples_tosend = "from_paramfile"
 
 
 
 
 
-writeFilesTosent = function(ht12object,paramfile = NULL,file_sampleannot_final.txt = "from_paramfile",file_probeannot_final.txt= "from_paramfile",file_annot_final.xlsx= "from_paramfile",file_final_expression_set= "from_paramfile",file_final_expression_matrix= "from_paramfile",file_all_transcripts_good_incl_remapping_ok= "from_paramfile",file_final_expression_matrix_allProbes.txt= "from_paramfile",file_renaming_samples_tosent= "from_paramfile") {
-  
+writeFilesTosend = function(ht12object,paramfile = NULL,file_sampleannot_final.txt = "from_paramfile",file_probeannot_final.txt= "from_paramfile",file_annot_final.xlsx= "from_paramfile",file_final_expression_set= "from_paramfile",file_final_expression_matrix= "from_paramfile",file_all_transcripts_good_incl_remapping_ok= "from_paramfile",file_final_expression_matrix_allProbes.txt= "from_paramfile",file_renaming_samples_tosend= "from_paramfile") {
+
 
 ### strings are imported as strings and not as factors
   options(stringsAsFactors=FALSE)
@@ -360,19 +360,19 @@ annot_probes <- annot_probes[names(probeannot), ]
 rownames(annot_probes) <- NULL
 
 ## ----renamefinal---------------------------------------------------------
-if(file_renaming_samples_tosent== "from_paramfile") file_renaming_samples_tosent_fn <- getParam2("file_renaming_samples_tosent", myparam = param) else file_renaming_samples_tosent_fn = file_renaming_samples_tosent
+if(file_renaming_samples_tosend== "from_paramfile") file_renaming_samples_tosend_fn <- getParam2("file_renaming_samples_tosend", myparam = param) else file_renaming_samples_tosend_fn = file_renaming_samples_tosend
 
-if(file_renaming_samples_tosent_fn == "" )
+if(file_renaming_samples_tosend_fn == "" )
   renaming <- data.table(oldname = sample_overview_l10$new_ID,
                          newname = sample_overview_l10$new_ID) else {
-file_renaming_samples_tosent <- fread(file_renaming_samples_tosent_fn)
-renaming <- data.table(oldname = file_renaming_samples_tosent[,oldname],
-                       newname = file_renaming_samples_tosent[, newname])
+file_renaming_samples_tosend <- fread(file_renaming_samples_tosend_fn)
+renaming <- data.table(oldname = file_renaming_samples_tosend[,oldname],
+                       newname = file_renaming_samples_tosend[, newname])
 }
 renaming
 showNA(renaming)
-if(sum(showNA(renaming)$NAs)!=0) stop("NAs in renamingfile specified in parameter `file_renaming_samples_tosent` not allowed.... stopping")
-if(any(sampleNames(total_nobkgd_eset_ql_combat) %nin% renaming$oldname)) { 
+if(sum(showNA(renaming)$NAs)!=0) stop("NAs in renamingfile specified in parameter `file_renaming_samples_tosend` not allowed.... stopping")
+if(any(sampleNames(total_nobkgd_eset_ql_combat) %nin% renaming$oldname)) {
   print(sampleNames(total_nobkgd_eset_ql_combat)[sampleNames(total_nobkgd_eset_ql_combat) %nin% renaming$oldname])
   print(ht(renaming))
   stop("Not all IDs from column 'new_ID' of the datafram from slot $chipsamples found in the provided renaming file.... stopping")
@@ -459,10 +459,10 @@ fordoku
 stopifnot(sum(duplicated(fordoku))==0)
 
 
-ht12object$dokuobjects_writeFilesTosent = lapply(fordoku, function(x) get(x))
+ht12object$dokuobjects_writeFilesTosend = lapply(fordoku, function(x) get(x))
 
 
-names(ht12object$dokuobjects_writeFilesTosent) = fordoku
+names(ht12object$dokuobjects_writeFilesTosend) = fordoku
 
 
 ht12object$history = rbind(ht12object$history, data.frame(calls = paste(Sys.time(), deparse(myparameters))))
