@@ -150,7 +150,7 @@ checkKnutsBkgd <- function(filename_1,filename_2){
 
 
 #laden parameter
-if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
+if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
 # str(param)
 #beispiel aller ilmn Genexpresssionsids eines vollst. datensatzes aus  "r:/genstat/01_daten/1111_ht12v4_lifeb3_hss/Einzelanalyse_nonorm_nobgkd_HSS38-AMI457.txt"
 

@@ -26,7 +26,7 @@ historie =  ht12object$history$calls
 if(any(grepl("checkExtractChipsamples", historie))==F) stop("Function 'checkExtractChipsamples()' has to be run before!")
 
 #laden parameter
-if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
+if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
 
 laengeilmn = dim(allilmn)[1]
 if(laengeilmn != 47323) stop("47323 ilmn-IDs aus file 'data/all47323ilmn.rda' wurden nicht richtig geladen")

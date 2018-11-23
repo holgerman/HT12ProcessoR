@@ -12,8 +12,7 @@
 
 createTextForMethods <- function(ht12object,paramfile) {
 
-  param <- read.delim(paramfile, as.is = T)
-
+ param <- data.frame(data.table::fread(paramfile))
 
   chipsamples = ht12object$chipsamples
   data.table::setDT(chipsamples)

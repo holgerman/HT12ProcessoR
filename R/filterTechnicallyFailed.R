@@ -32,7 +32,7 @@ historie =  ht12object$history$calls
 if(any(grepl("transformNormalizeHT12object", historie))==F) stop("Function 'transformNormalizeHT12object()' has to be run before!")
 
 #laden parameter
-if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
+if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
 
 
 

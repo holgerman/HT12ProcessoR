@@ -32,7 +32,7 @@ if(any(grepl("createExpressionSet", historie))==F) stop("Function 'createExpress
 
 
 #laden parameter
-if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
+if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
 
 
 sample_overview_l5_initial <- ht12object$chipsamples

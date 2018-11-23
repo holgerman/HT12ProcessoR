@@ -1,4 +1,4 @@
-#' @title Identify remaining batch effects in expression data 
+#' @title Identify remaining batch effects in expression data
 #'
 #' @description Identification of transcripts where association with batches is still stronger than expected by chance after batch-adjustment. Stronger than chance (i.e. overinflation) is defined as association stronger p-value after Bonferroni correction. All defined Batches will be tested, i.e. `Sentrix.Barcode`,  `processingbatch`, and `strangebatch` in the table from slot `$chipsamples` if more than one category of the batch is found. Probes are not filtered but annotated when found to be overinflated. This function makes use of package MatrixEQTL in order to allow fast ANOVA on matrices. Therefore, some messages from these functions report doing an "eQTL analysis" allthough in fact an ANOVA is done on batch effects
 
@@ -6,7 +6,7 @@
 #' @param paramfile Path to the file specifying parameters
 #' @return A list object of class HT12prepro where  the slot with  probe-related attributes of the current processing-stage named `$genesdetail` is updated as well as the  slot with the history of the commands named `$history`.  QQ plots of the association are shown.
 #' @import data.table
-#' @export  
+#' @export
 
 ## debug
 # paramfile = myparamfile
@@ -16,27 +16,27 @@
 
 
 checkBatchEffects = function(ht12object,paramfile = NULL, showPlots=T) {
-  
+
 ### strings are imported as strings and not as factors
   options(stringsAsFactors=FALSE)
-  
+
   myparameters = match.call()
   showVennplots = F
-  
+
   # status checken
   historie =  ht12object$history$calls
   if(any(grepl("removeBatchEffects", historie))==F) stop("Function 'removeBatchEffects()' has to be run before!")
-  
+
   #laden parameter
-  if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
-  
-  
-  
+  if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
+
+
+
 sample_overview_l8 <-  ht12object$chipsamples
 sample_overview_l8instudy <- sample_overview_l8[sample_overview_l8$in_study, ]
 dim(sample_overview_l8)
 dim(sample_overview_l8instudy)
-table(table(sample_overview_l8instudy$new_ID)) 
+table(table(sample_overview_l8instudy$new_ID))
 if(length(table(table(sample_overview_l8instudy$new_ID))) != 1)
   stop("IDs (column new_ID) must be unique....stopping...")
 
@@ -70,7 +70,7 @@ stopifnot(is.logical(anova_with_special_batch))
 total_nobkgd_eset_ql_combat
 total_nobkgd_eset_ql
 
-# gute individuen 
+# gute individuen
 goodind <- sample_overview_l8instudy$new_ID
 # str(goodind)
 check1 <- venn3(goodind,
@@ -152,7 +152,7 @@ if(showPlots==T) {
   par(mfrow =c(2,2))
   n_sentrix = length(unique(sample_overview_l8$Sentrix.Barcode[ sample_overview_l8$in_study]))
   n_fileset_id = length(unique(sample_overview_l8$fileset_id[ sample_overview_l8$in_study]))
-  
+
   # str(genesdetail)
   ggd.qqplot(genesdetail$all_pval_before_sentrix, main= "ANOVA Sentrix before Combat")
   mtext(paste(n_sentrix, " batch(es) present", collapse = " "))
@@ -162,8 +162,8 @@ if(showPlots==T) {
   mtext(paste(n_fileset_id, " batch(es) present", collapse = " "))
   ggd.qqplot(genesdetail$all_pval_after_bigbatch, main= "ANOVA fileset_id after Combat")
   mtext(paste(n_fileset_id, " batch(es) present", collapse = " "))
-  
-  
+
+
 }
 
 ## ----save----------------------------------------------------------------

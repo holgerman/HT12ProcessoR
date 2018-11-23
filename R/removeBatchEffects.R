@@ -43,7 +43,7 @@ removeBatchEffects = function(ht12object,paramfile = NULL,excludeERCC = "from_pa
   if(any(grepl("filter4MinBatchsize", historie))==F) stop("Function 'filter4MinBatchsize()' has to be run before!")
 
   #laden parameter
-  if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
+  if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
 
 
 

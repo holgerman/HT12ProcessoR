@@ -29,7 +29,7 @@ historie =  ht12object$history$calls
 if(any(grepl("filterTechnicallyFailed", historie))==F) stop("Function 'filterTechnicallyFailed()' has to be run before!")
 
 #laden parameter
-if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
+if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
 
 ht12object$chipsamples$Sentrix.Barcode = as.character(ht12object$chipsamples$Sentrix.Barcode) ## added 22.8.18 , da int64 nicht  wie eine numerische Variable mit einem character verglichen werden kann, sollte aber bereits character sein, sicherheitsmassnahme
 sample_overview_l7pre <-ht12object$chipsamples

@@ -47,7 +47,7 @@ writeFilesTosend = function(ht12object,paramfile = NULL,file_sampleannot_final.t
 
 
   #laden parameter
-  if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
+  if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
 
 
 

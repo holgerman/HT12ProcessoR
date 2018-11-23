@@ -1,6 +1,6 @@
 #' @title Normalize and transform expression sets included in a HT12prepro object
 #'
-#' @description Normalizes and transforms the expression sets included in a HT12prepro object and create additional slots saving the resulting data.  See vignette for an example. 
+#' @description Normalizes and transforms the expression sets included in a HT12prepro object and create additional slots saving the resulting data.  See vignette for an example.
 #'
 
 #' @param ht12object A list object of class HT12prepro created with function createExpressionSet()
@@ -20,26 +20,26 @@
 transformNormalizeHT12object = function(ht12object,paramfile = NULL, normalisation_method = "from_paramfile", fn_plot = NULL ) {
 ### strings are imported as strings and not as factors
   options(stringsAsFactors=FALSE)
-  
+
   myparameters = match.call()
   showVennplots = F
-  
-  
+
+
   # status checken
   historie =  ht12object$history$calls
   if(any(grepl("createExpressionSet", historie))==F) stop("Function 'createExpressionSet()' has to be run before!")
-  
+
   #laden parameter
-  if(is.null(paramfile)==F) param <- read.delim(paramfile, as.is = T)
-  
-  
-  
+  if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
+
+
+
 sample_overview_l6 <- ht12object$chipsamples
 mytable(sample_overview_l6$in_study)
 sample_overview_l6instudy <- sample_overview_l6[sample_overview_l6$in_study, ]
 dim(sample_overview_l6)
 dim(sample_overview_l6instudy)
-table(table(sample_overview_l6instudy$new_ID)) 
+table(table(sample_overview_l6instudy$new_ID))
 if(length(table(table(sample_overview_l6instudy$new_ID))) != 1)
   stop("IDs (column new_ID) must be unique....stopping...")
 
@@ -60,13 +60,13 @@ total_nobkgd_eset_goodind <- total_nobkgd_eset[, goodind]
 total_nobkgd_eset_goodind
 
 ## ----normandtrans--------------------------------------------------------
-if(normalisation_method == "from_paramfile")  methodtransform <- getParam2("normalisation_method", myparam = param) else  methodtransform = normalisation_method  
+if(normalisation_method == "from_paramfile")  methodtransform <- getParam2("normalisation_method", myparam = param) else  methodtransform = normalisation_method
 methodtransform
 
 total_nobkgd_eset_ql <- transformNormalize(total_nobkgd_eset_goodind,
                                            methodtransform = methodtransform,
                                            dolog2 = T)
-                                          
+
 total_nobkgd_eset_ql
 
 
