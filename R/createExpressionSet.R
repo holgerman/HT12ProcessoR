@@ -519,12 +519,18 @@ all_con <- all_con[ , names(all_con) %nin% escludecols]
 
 ## ----colseparat----------------------------------------------------------
 
+# where does the colseparator come from?
 colseparator
-if(colseparator != ".") {
+
+# what is the current colseparator?
+colseparator_used
+
+# change to "." if "." is not set in colseparator_used
+if(colseparator_used != ".") {
   class(all_con)
   all_con <- data.table(all_con)
   numcol = grep( "AVG_Signal$|Detection.Pval$", names(all_con), value = T)
-  for (j in numcol) set(all_con, j = j, value = as.numeric(gsub(pattern = colseparator, replacement = ".", all_con[[j]])))
+  for (j in numcol) set(all_con, j = j, value = as.numeric(gsub(pattern = colseparator_used, replacement = ".", all_con[[j]])))
   # table(showClassDF(all_con))
   all_con <- data.frame(all_con)
 }
