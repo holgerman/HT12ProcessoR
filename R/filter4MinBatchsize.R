@@ -26,7 +26,10 @@ showVennplots = F
 
 # status checken
 historie =  ht12object$history$calls
-if(any(grepl("filterTechnicallyFailed", historie))==F) stop("Function 'filterTechnicallyFailed()' has to be run before!")
+# if(any(grepl("filterTechnicallyFailed", historie))==F) stop("Function 'filterTechnicallyFailed()' has to be run before!")
+if(any(grepl("filterLowExpressed", historie))==F) stop("Function 'filterLowExpressed()' has to be run before!")
+
+
 
 #laden parameter
 if(is.null(paramfile)==F) param <- data.frame(data.table::fread(paramfile))
