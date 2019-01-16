@@ -52,14 +52,6 @@ subgroups <- unique(sample_overview_l6instudy$subgroup)
 subgroups
 
 # laden expressionsets
-if(eset2use == "total_nobkgd_eset_ql") {
-  total_nobkgd_eset_ql =  ht12object$total_nobkgd_eset_ql
-  message("Calculations based on normalized/transformed data")
-  }
-if(eset2use == "total_nobkgd_eset_ql_combat"){
-  total_nobkgd_eset_ql =  ht12object$total_nobkgd_eset_ql_combat
-  message("Calculations based on normalized/transformed and batch-adjusted data")
-}
 
 if(eset2use == "total_nobkgd_eset_ql") {
   total_nobkgd_eset_ql =  ht12object$total_nobkgd_eset_ql
