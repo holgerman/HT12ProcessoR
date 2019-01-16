@@ -3,6 +3,7 @@
 
 #' @param ht12object A list object of class HT12prepro created with function transformNormalizeHT12object()
 #' @param paramfile Path to the file specifying parameters
+#' @param eset2use Shall the analysis based on transformed/normalized data, use "total_nobkgd_eset_ql" (default), shall the batch-adjusted data be used, use   total_nobkgd_eset_ql_combat
 #' @param controlparameters2check Illuminas control features used for calculation of the Mahalanobis distance based outlyer criterium. Default ist 'hybrid_low, hybrid_med,  string_pm, string_mm, biotin, negative' (if spiked in erccc is used in ALL CHIPS use also 'ercc_1, ercc_2, ercc_3, ercc_4, ercc_5', if spked in artificial polyadenylated RNAs from Bacillus subtilis immediately preceding the reverse transcription step is used, also 'labeling'). In case of population based studies within a single tissue default is also 'housekeeping, Detected.Genes..0.01.'.  If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.
 #' @param robustmethod_for_mahal Method used for calculation of robust correllation for Mahalanobis distance within function mdqc(). Previous default was "S-estimator" (which has a 25 percent breakdown point), now "MVE" is prefferred (i.e. the Minimum Volume Ellipsoid (MVE) which searches for the ellipsoid with the smallest volume that covers h data points). Alternative is "MCD" (i.e. the Minimum Covariance Determinant (MCD) estimator which looks for the subset of h data points whose covariance matrix has the smallest determinant). If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.
 #' @param filter2ind_atypischIlmnKontroll Filter for extreme combination of Illuminas control features summarized as Mahalanobis distance to an artificial sample. This artificial sample having has average values for the selected quality control features. Valid is ln('Mahalanobis distance') < median(ln('Mahalanobis distance')) + [value] *  IQR(ln('Mahalanobis distance')). If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.
@@ -19,7 +20,7 @@
 # ht12object =  prepro_ht12
 
 
-filterTechnicallyFailed = function(ht12object,paramfile = NULL,filter2ind_atypischIlmnKontroll = "from_paramfile", controlparameters2check = "from_paramfile", robustmethod_for_mahal = "from_paramfile") {
+filterTechnicallyFailed = function(ht12object,paramfile = NULL,filter2ind_atypischIlmnKontroll = "from_paramfile", eset2use="total_nobkgd_eset_ql",controlparameters2check = "from_paramfile", robustmethod_for_mahal = "from_paramfile") {
 
 ### strings are imported as strings and not as factors
   options(stringsAsFactors=FALSE)
@@ -51,7 +52,15 @@ subgroups <- unique(sample_overview_l6instudy$subgroup)
 subgroups
 
 # laden expressionsets
-total_nobkgd_eset_ql =  ht12object$total_nobkgd_eset_ql
+if(eset2use == "total_nobkgd_eset_ql") {
+  total_nobkgd_eset_ql =  ht12object$total_nobkgd_eset_ql
+  message("Calculations based on normalized/transformed data")
+  }
+if(eset2use == "total_nobkgd_eset_ql_combat"){
+  total_nobkgd_eset_ql =  ht12object$total_nobkgd_eset_ql_combat
+  message("Calculations based on normalized/transformed and batch-adjusted data")
+}
+
 
 # annotcon
 # kontrollids laden
