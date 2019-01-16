@@ -61,6 +61,40 @@ if(eset2use == "total_nobkgd_eset_ql_combat"){
   message("Calculations based on normalized/transformed and batch-adjusted data")
 }
 
+if(eset2use == "total_nobkgd_eset_ql") {
+  total_nobkgd_eset_ql =  ht12object$total_nobkgd_eset_ql
+  message("Calculations based on normalized/transformed data")
+}
+if(eset2use == "total_nobkgd_eset_ql_combat"){
+
+  message("Calculations based on normalized/transformed and batch-adjusted data")
+
+  if(getParam2("excludeERCC", myparam = param)==T ) {
+    message("using ercc data from non-bach adjusted eset as ercc was not included in batch adjustment due to parameter`exludeERCC`")
+
+    total_nobkgd_eset_ql =  ht12object$total_nobkgd_eset_ql
+    total_nobkgd_eset_ql_combat =  ht12object$total_nobkgd_eset_ql_combat
+
+
+
+    stopifnot(identical(Biobase::sampleNames(total_nobkgd_eset_ql), Biobase::sampleNames(total_nobkgd_eset_ql_combat)))
+    stopifnot(identical(colnames(Biobase::exprs(total_nobkgd_eset_ql)), colnames(Biobase::exprs(total_nobkgd_eset_ql_combat))))
+
+    qlist111 = venn2(rownames(Biobase::exprs(total_nobkgd_eset_ql)), rownames(Biobase::exprs(total_nobkgd_eset_ql_combat)), plotte = showVennplots)
+    stopifnot(length(qlist111$q2)==92)
+
+    hh(exprs(total_nobkgd_eset_ql))
+    hh(exprs(total_nobkgd_eset_ql_combat))
+
+    exprs(total_nobkgd_eset_ql)[qlist111$q1,] = exprs(total_nobkgd_eset_ql_combat)[qlist111$q1,]
+
+
+
+  } else  total_nobkgd_eset_ql =   ht12object$total_nobkgd_eset_ql_combat
+
+
+}
+
 
 # annotcon
 # kontrollids laden
