@@ -27,7 +27,13 @@
 # additional_normalisation_after_combat= "from_paramfile"
 # showPlot_additional_normalisation_after_combat=T
 
-removeBatchEffects = function(ht12object,paramfile = NULL,excludeERCC = "from_paramfile", save_subgroupcontrast = "from_paramfile", second_combat_withvar= "from_paramfile", additional_normalisation_after_combat= "from_paramfile", normalisation_method = "from_paramfile", showPlot_additional_normalisation_after_combat=T) {
+removeBatchEffects = function(ht12object,paramfile = NULL,
+                              excludeERCC = "from_paramfile",
+                              save_subgroupcontrast = "from_paramfile",
+                              second_combat_withvar= "from_paramfile",
+                              additional_normalisation_after_combat= "from_paramfile",
+                              normalisation_method = "from_paramfile",
+                              showPlot_additional_normalisation_after_combat=T) {
 
   # ht12object=prepro_ht12;paramfile = myparamfile = paste0(prepro_folder, "/input_parameter_010.txt");excludeERCC = "from_paramfile"; save_subgroupcontrast = "from_paramfile"; second_combat_withvar= "from_paramfile"; additional_normalisation_after_combat= "from_paramfile"; normalisation_method = "from_paramfile"; showPlot_additional_normalisation_after_combat=T
 
@@ -128,20 +134,64 @@ removeBatchEffects = function(ht12object,paramfile = NULL,excludeERCC = "from_pa
   save_subgroupcontrast_used = as.logical(save_subgroupcontrast_used)
 
 
+  # check whether batches are present and skip combat if only one batch is foud
   if(length( unique(Biobase::pData(total_nobkgd_eset_ql)$hybridisierungchipserialnumber))==1) {
     message("Skipping adjustment for Chip batcheffect as only a single chip is included...\n")
     total_nobkgd_eset_ql_combat = total_nobkgd_eset_ql
     status_combatMitCovar = F
-  }else
-  {
-
-
-
+  } else {
 
     if(nrow(singularcheck3) == 0 | save_subgroupcontrast_used == F) {
       message("NOT additionally protecting contrast `subgroup` in Combat...")
+
       batch <- Biobase::pData(total_nobkgd_eset_ql)$hybridisierungchipserialnumber
-      modcombat <- model.matrix(~1, data = Biobase::pData(total_nobkgd_eset_ql))
+
+      # change modcombat based on covars provided in params file
+      if(as.logical(getParam2("ComBat_adjust_covariates", myparam = param))) {
+
+        # add columns provided to modcombat
+        combat.covars <- getParam2("ComBat_covariates_to_adjust", myparam = param)
+
+        # format
+        combat.covars <- gsub(pattern = " ", replacement = "", x = combat.covars)
+        combat.covars <- unlist(strsplit(x = combat.covars, split = ",", fixed = T))
+
+        # get and match data
+        # Add data
+        pData(total_nobkgd_eset_ql)[, combat.covars] <- NA
+        Biobase::pData(
+          total_nobkgd_eset_ql)[
+            , combat.covars
+            ] <-  sample_overview_l7[
+              match_hk(
+                Biobase::pData(
+                  total_nobkgd_eset_ql
+                  )$sampleID, sample_overview_l7$new_ID
+                ), combat.covars
+              ]
+
+        # sample_overview_l7[
+        #       match_hk(
+        #         Biobase::pData(
+        #           total_nobkgd_eset_ql
+        #           )$sampleID, sample_overview_l7$new_ID
+        #         ), c("in_study", "subgroup")]
+
+        # create formula
+        combat.formula <- formula(
+          paste0("~ 1 + ", paste(combat.covars, collapse = " + "))
+          )
+
+        # add the data in the model matrix
+        modcombat <- model.matrix(combat.formula, data = Biobase::pData(total_nobkgd_eset_ql))
+
+      } else {
+
+        # use the model matrix without covariates
+        modcombat <- model.matrix(~1, data = Biobase::pData(total_nobkgd_eset_ql))
+      }
+
+      # run combat with or without covariates depending on previous if-else
       combat_edata <- sva::ComBat(dat=Biobase::exprs(total_nobkgd_eset_ql),
                                   batch = batch,
                                   mod = modcombat,
@@ -152,7 +202,51 @@ removeBatchEffects = function(ht12object,paramfile = NULL,excludeERCC = "from_pa
       stopifnot(identical(colnames(combat_edata), colnames(Biobase::exprs(total_nobkgd_eset_ql_combat))))
       Biobase::exprs(total_nobkgd_eset_ql_combat) <- combat_edata
       status_combatMitCovar = F
+
     } else {
+
+      # batch adjust including subgroup with and without covariates
+      # change modcombat based on covars provided in params file
+      if(as.logical(getParam2("ComBat_adjust_covariates", myparam = param))) {
+
+        # add columns provided to modcombat
+        combat.covars <- getParam2("ComBat_covariates_to_adjust", myparam = param)
+
+        # format
+        combat.covars <- gsub(pattern = " ", replacement = "", x = combat.covars)
+        combat.covars <- unlist(strsplit(x = combat.covars, split = ",", fixed = T))
+
+        # get and match data
+        # Add data
+        pData(total_nobkgd_eset_ql)[, combat.covars] <- NA
+        Biobase::pData(
+          total_nobkgd_eset_ql)[
+            , combat.covars
+            ] <-  sample_overview_l7[
+              match_hk(
+                Biobase::pData(
+                  total_nobkgd_eset_ql
+                )$sampleID, sample_overview_l7$new_ID
+              ), combat.covars
+              ]
+
+        # create formula
+        combat.formula <- formula(
+          paste0("~ 1 + subgroup", paste(combat.covars, collapse = " + "))
+        )
+
+        # add the data in the model matrix
+        modcombat <- model.matrix(combat.formula, data = Biobase::pData(total_nobkgd_eset_ql))
+
+      } else {
+
+        # formula with additional subgroup
+        combat.formula <- formula("~ 1 + subgroup")
+
+        # use the model matrix without covariates
+        modcombat <- model.matrix(combat.formula, data = Biobase::pData(total_nobkgd_eset_ql))
+      }
+
       message("Additional protecting contrast `subgroup` in Combat...")
       batch <- Biobase::pData(total_nobkgd_eset_ql)$hybridisierungchipserialnumber
       modcombat <- model.matrix(~subgroup, data=Biobase::pData(total_nobkgd_eset_ql))

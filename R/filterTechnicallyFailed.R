@@ -108,9 +108,9 @@ qlist2 <- venn2(annotcon$Reporter_Group_Name, ercc_det$ERCC.ID, plotte = showVen
 matcher <- annotcon[annotcon$Reporter_Group_Name %in% ercc_det$ERCC.ID,]
 ercc_det$ilmn <- matcher[match_hk(ercc_det$ERCC.ID, matcher$Reporter_Group_Name), "ilmn"]
 gx_ercc <- exprs(total_nobkgd_eset_ql[genesdetail[genesdetail$is_ercc, "nuid"], ])
-hh(gx_ercc)
+# hh(gx_ercc)
 rownames(gx_ercc) <- lumi::nuID2IlluminaID(rownames(gx_ercc))[, 'Probe_Id']
-hh(gx_ercc)
+# hh(gx_ercc)
 ercc_dt <- data.frame(gx_ercc)
 inds_in_ercc_dt <- names(ercc_dt)
 ercc_dt$ilmn <- rownames(ercc_dt)
