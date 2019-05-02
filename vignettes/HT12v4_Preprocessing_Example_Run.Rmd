@@ -42,6 +42,7 @@ for (i in c(
   "HT12ProcessoR",
   "toolboxH",
   "lumi",
+  "sva",
   "knitr",
   "here",
   "data.table",
@@ -135,9 +136,7 @@ write.table(x = input,
 Next, customize project-specific variables in a parameter file. This file is used to provide most relevant parameters in a single place for the individual preprocessing functions. Parameters will also be explained later. An example is provided with this package
 
 ```{r parameter.file}
-
-myparams <- read.delim(system.file("extdata", "input_parameter_010.txt", package = "HT12ProcessoR"),
-                       as.is = T)
+myparams <- read.delim(system.file("extdata", "input_parameter_010.txt", package = "HT12ProcessoR"), quote = "", sep = "\t")
 ```
 
 Project-specific parameters that should be customized initially are:
@@ -154,6 +153,12 @@ myparams[myparams$variable == "datafolder_results", "value"] <- paste0(prepro.fo
 
 # where should the file be saved (overwrite the previously read-in file)
 myparamfile <- paste0(prepro.folder, "/obj/input_parameter_010.txt")
+
+# adjust for covariates T/F
+myparams[myparams$variable == "ComBat_adjust_covariates", "value"] <- T
+
+# what are the columns in chipsamples containing the covariate data called?
+myparams[myparams$variable == "ComBat_covariates_to_adjust", "value"] <- c("covar1", "covar2", "covar3")
 
 # save the file again with the above changes
 write.table(myparams,
@@ -190,6 +195,29 @@ class(prepro_ht12)
 
 # another file preview
 pander(ht(prepro_ht12$chipsamples, 1))
+```
+
+Add fake covariate data
+
+```{r add.covar}
+# Add covariates to chipsamples
+covar.id <- prepro_ht12$chipsamples$new_ID
+
+# create some random covariates (just for proof of concept)
+covars <- data.frame(id = covar.id,
+           covar1 = sample(LETTERS[1:3], size = length(covar.id), replace = T),
+           covar2 = rnorm(length(covar.id)),
+           covar3 = factor(sample(c(0,1), size = length(covar.id), replace = T))
+           )
+
+# add covariates to ht12object
+for(i in names(covars)[-1]){
+  matched <- match(prepro_ht12$chipsamples$new_ID, covars$id)
+  prepro_ht12$chipsamples[[i]] <- covars[matched, i]
+}
+
+# what are the covariates calles?
+covar.cols <- names(covars)[-1]
 ```
 
 # Step 2 - Designate individuals and subgroups for preprocessing and redefine batches
@@ -376,7 +404,7 @@ prepro_ht12 <- filter4MinBatchsize(prepro_ht12, paramfile = myparamfile)
 prepro_ht12 <- transformNormalizeHT12object(prepro_ht12, paramfile = myparamfile)
 
 # execute batch- adjustment via sva::ComBat()
-prepro_ht12 <- removeBatchEffects(prepro_ht12, paramfile = myparamfile)
+prepro_ht12 <- removeBatchEffects(ht12object = prepro_ht12, paramfile = myparamfile)
 
 # review command history
 kable(prepro_ht12$history)
