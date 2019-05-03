@@ -459,8 +459,8 @@ removeBatchEffects = function(ht12object,
 
   # individuenattrib
 
-  sample_overview_l7[!(sample_overview_l7$old_ID %in% good.ids),"in_study"] = F #TAG#
-  sample_overview_l7[!(sample_overview_l7$old_ID %in% good.ids),"reason4exclusion"] <- "Missings in covariate data. This is not allowed with batch adjustment via ComBat()"
+  sample_overview_l7[!(sample_overview_l7$new_ID %in% good.ids),"in_study"] = F #TAG#
+  sample_overview_l7[!(sample_overview_l7$new_ID %in% good.ids),"reason4exclusion"] <- "Missings in covariate data. This is not allowed with batch adjustment via ComBat()"
   sample_overview_l7[sample_overview_l7$new_ID %in% singlbarcoders_ind,"in_study"] = F
   sample_overview_l7[sample_overview_l7$new_ID %in% singlbarcoders_ind,"reason4exclusion"] <- "Batch/effect correction via ComBat not possible - only 1 Ind. with this Sentrix ID"
 
