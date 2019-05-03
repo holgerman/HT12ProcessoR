@@ -79,6 +79,8 @@ check1 <- venn3(goodind,
 # str(check1)
 stopifnot(length(c(check1$q2, check1$q4, check1$q5, check1$q6, check1$q7, check1$q3)) == 0)
 
+# i might have to remove check1$q4 in case samples with NAs in the covariates get removed during ComBat
+
 ## ----AnnotationCombatCheck-----------------------------------------------
 ht(pData(total_nobkgd_eset_ql_combat), 2)
 total_nobkgd_eset_ql_combat
