@@ -27,7 +27,8 @@
 # additional_normalisation_after_combat= "from_paramfile"
 # showPlot_additional_normalisation_after_combat=T
 
-removeBatchEffects = function(ht12object,paramfile = NULL,
+removeBatchEffects = function(ht12object,
+                              paramfile = NULL,
                               excludeERCC = "from_paramfile",
                               save_subgroupcontrast = "from_paramfile",
                               second_combat_withvar= "from_paramfile",
@@ -141,10 +142,15 @@ removeBatchEffects = function(ht12object,paramfile = NULL,
     status_combatMitCovar = F
   } else {
 
+
+    # ComBat without subgroup =================================================
+
     if(nrow(singularcheck3) == 0 | save_subgroupcontrast_used == F) {
       message("NOT additionally protecting contrast `subgroup` in Combat...")
 
       batch <- Biobase::pData(total_nobkgd_eset_ql)$hybridisierungchipserialnumber
+
+      # ComBat with covariates --------------------------------------------------
 
       # change modcombat based on covars provided in params file
       if(as.logical(getParam2("ComBat_adjust_covariates", myparam = param))) {
@@ -170,6 +176,12 @@ removeBatchEffects = function(ht12object,paramfile = NULL,
                 ), combat.covars
               ]
 
+        # filter the individuals for NAs in the phenotypic data and set a filter for removal of those inds both in the phenotypes and in the gx data
+        good.ids <- na.omit(Biobase::pData(total_nobkgd_eset_ql)[, c("sampleID", combat.covars)])$sampleID
+        batch <- Biobase::pData(total_nobkgd_eset_ql)[pData(total_nobkgd_eset_ql)$sampleID %in% good.ids, "hybridisierungchipserialnumber"]
+        message("Removing the individuals ", paste(
+          setdiff(pData(total_nobkgd_eset_ql)$sampleID, good.ids), collapse = ", "), " due to missings in the coviarate data, which is not permitted in ComBat.")
+
         # sample_overview_l7[
         #       match_hk(
         #         Biobase::pData(
@@ -184,26 +196,38 @@ removeBatchEffects = function(ht12object,paramfile = NULL,
 
         # add the data in the model matrix
         modcombat <- model.matrix(combat.formula, data = Biobase::pData(total_nobkgd_eset_ql))
+        status_combatMitCovar = T
+
+        # ComBat without Covariates -----------------------------------------------
 
       } else {
 
+        # empty filter in case of no covariates, i.e. nothing to filter for
+        good.ids <- Biobase::pData(total_nobkgd_eset_ql)$sampleID
+
         # use the model matrix without covariates
         modcombat <- model.matrix(~1, data = Biobase::pData(total_nobkgd_eset_ql))
+        status_combatMitCovar = F
       }
 
       # run combat with or without covariates depending on previous if-else
-      combat_edata <- sva::ComBat(dat=Biobase::exprs(total_nobkgd_eset_ql),
+      combat_edata <- sva::ComBat(dat=Biobase::exprs(total_nobkgd_eset_ql)[, good.ids], # this filters out samples with missings in covariate data
                                   batch = batch,
                                   mod = modcombat,
                                   par.prior = TRUE,
                                   prior.plots = T)
       total_nobkgd_eset_ql_combat <- total_nobkgd_eset_ql
       stopifnot(identical(rownames(combat_edata), rownames(Biobase::exprs(total_nobkgd_eset_ql_combat))))
-      stopifnot(identical(colnames(combat_edata), colnames(Biobase::exprs(total_nobkgd_eset_ql_combat))))
-      Biobase::exprs(total_nobkgd_eset_ql_combat) <- combat_edata
-      status_combatMitCovar = F
+      stopifnot(identical(colnames(combat_edata), colnames(Biobase::exprs(total_nobkgd_eset_ql_combat)[,good.ids])))
+      total_nobkgd_eset_ql_combat <- total_nobkgd_eset_ql_combat[, good.ids]
+      Biobase::exprs(total_nobkgd_eset_ql_combat)[, good.ids] <- combat_edata[, good.ids]
 
     } else {
+
+
+      # ComBat with Subgroup ====================================================
+
+      # ComBat with Covariates --------------------------------------------------
 
       # batch adjust including subgroup with and without covariates
       # change modcombat based on covars provided in params file
@@ -230,41 +254,65 @@ removeBatchEffects = function(ht12object,paramfile = NULL,
               ), combat.covars
               ]
 
+        # filter the individuals for NAs in the phenotypic data and set a filter for removal of those inds both in the phenotypes and in the gx data
+        good.ids <- na.omit(Biobase::pData(total_nobkgd_eset_ql)[, c("sampleID", combat.covars)])$sampleID
+        batch <- Biobase::pData(total_nobkgd_eset_ql)[pData(total_nobkgd_eset_ql)$sampleID %in% good.ids, "hybridisierungchipserialnumber"]
+        message("Removing the individuals ", paste(
+          setdiff(
+            pData(
+              total_nobkgd_eset_ql
+              )$sampleID, good.ids
+            ), collapse = ", "
+          ), " due to missings in the coviarate data, which is not permitted in ComBat.")
+
+
         # create formula
         combat.formula <- formula(
-          paste0("~ 1 + subgroup", paste(combat.covars, collapse = " + "))
+          paste0("~ 1 + subgroup + ", paste(combat.covars, collapse = " + "))
         )
 
         # add the data in the model matrix
         modcombat <- model.matrix(combat.formula, data = Biobase::pData(total_nobkgd_eset_ql))
+        status_combatMitCovar <- "subgroup + covars"
 
       } else {
 
+        # ComBat without Covariates -----------------------------------------------
+
+        # empty filter in case of no covariates, i.e. nothing to filter for
+        good.ids <- Biobase::pData(total_nobkgd_eset_ql)$sampleID
+        batch <- Biobase::pData(total_nobkgd_eset_ql)$hybridisierungchipserialnumber
+
         # formula with additional subgroup
         combat.formula <- formula("~ 1 + subgroup")
+        status_combatMitCovar <- "subgroup"
 
         # use the model matrix without covariates
         modcombat <- model.matrix(combat.formula, data = Biobase::pData(total_nobkgd_eset_ql))
       }
 
+      # ComBat Batch adjustment -------------------------------------------------
+
       message("Additional protecting contrast `subgroup` in Combat...")
-      batch <- Biobase::pData(total_nobkgd_eset_ql)$hybridisierungchipserialnumber
-      modcombat <- model.matrix(~subgroup, data=Biobase::pData(total_nobkgd_eset_ql))
+      # modcombat <- model.matrix(~subgroup, data=Biobase::pData(total_nobkgd_eset_ql))
       balanciertcheck <- xtabs_hk(~batch + Biobase::pData(total_nobkgd_eset_ql)$subgroup)
       message(balanciertcheck)
       message(chisq.test(balanciertcheck))
       if(chisq.test(balanciertcheck)$p.value <= 0.05)
         warning("subgroups not balanced, but contrast saved in combat - might result in false positives...", immediate. = T)
-      combat_edata <- sva::ComBat(dat = Biobase::exprs(total_nobkgd_eset_ql),
+      combat_edata <- sva::ComBat(dat = Biobase::exprs(total_nobkgd_eset_ql)[, good.ids],
                                   batch = batch,
                                   mod = modcombat,
                                   par.prior = TRUE,
                                   prior.plots = T)
       total_nobkgd_eset_ql_combat <- total_nobkgd_eset_ql
       stopifnot(identical(rownames(combat_edata), rownames(Biobase::exprs(total_nobkgd_eset_ql_combat))))
-      stopifnot(identical(colnames(combat_edata), colnames(Biobase::exprs(total_nobkgd_eset_ql_combat))))
-      Biobase::exprs(total_nobkgd_eset_ql_combat) <- combat_edata
-      status_combatMitCovar <- "subgroup"
+      stopifnot(identical(colnames(combat_edata), colnames(Biobase::exprs(total_nobkgd_eset_ql_combat)[, good.ids])))
+
+      # replace original data with adjusted data
+      total_nobkgd_eset_ql_combat <- total_nobkgd_eset_ql_combat[, good.ids]
+      Biobase::exprs(total_nobkgd_eset_ql_combat)[, good.ids] <- combat_edata[, good.ids]
+
     }
   }
 
@@ -380,8 +428,13 @@ removeBatchEffects = function(ht12object,paramfile = NULL,
 
   ## ----coorellationCombat8b------------------------------------------------
   if(identical(Biobase::pData(total_nobkgd_eset_ql_combat)$sampleID,
-               Biobase::pData(total_nobkgd_eset_ql)$sampleID) == F)
+               Biobase::pData(total_nobkgd_eset_ql)[
+                 Biobase::pData(
+                   total_nobkgd_eset_ql
+                   )$sampleID %in% good.ids,
+                 ]$sampleID) == F) {
     stop("Something went wrong - code 33443361")
+    }
 
 
 

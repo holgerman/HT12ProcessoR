@@ -158,7 +158,7 @@ myparamfile <- paste0(prepro.folder, "/obj/input_parameter_010.txt")
 myparams[myparams$variable == "ComBat_adjust_covariates", "value"] <- T
 
 # what are the columns in chipsamples containing the covariate data called?
-myparams[myparams$variable == "ComBat_covariates_to_adjust", "value"] <- c("covar1", "covar2", "covar3")
+myparams[myparams$variable == "ComBat_covariates_to_adjust", "value"] <- paste("covar1", "covar2", "covar3", sep = ", ")
 
 # save the file again with the above changes
 write.table(myparams,
@@ -214,6 +214,9 @@ covars <- data.frame(id = covar.id,
 for(i in names(covars)[-1]){
   matched <- match(prepro_ht12$chipsamples$new_ID, covars$id)
   prepro_ht12$chipsamples[[i]] <- covars[matched, i]
+  
+  # set some NA
+  prepro_ht12$chipsamples[[i]][sample(1:nrow(prepro_ht12$chipsamples), size = sample(1:5, 1))] <- NA
 }
 
 # what are the covariates calles?
