@@ -77,7 +77,14 @@ check1 <- venn3(goodind,
                 pData(total_nobkgd_eset_ql)$sampleID,
                 pData(total_nobkgd_eset_ql_combat)$sampleID, plotte = showVennplots)
 # str(check1)
-stopifnot(length(c(check1$q2, check1$q4, check1$q5, check1$q6, check1$q7, check1$q3)) == 0)
+# removed check1$q6 from this, which is the overlap of samples pre and post combat - which does not have to be 0
+stopifnot(length(c(check1$q2, check1$q4, check1$q5,  check1$q7, check1$q3)) == 0)
+
+# Its no longer valid to compare sample size before/after combat due to removal of IDs... check on other ways to successfully check this
+# venn2(ht12object$chipsamples[ht12object$chipsamples$in_study==F, "new_ID"],
+# check1$q6)
+
+# i might have to remove check1$q4 in case samples with NAs in the covariates get removed during ComBat
 
 ## ----AnnotationCombatCheck-----------------------------------------------
 ht(pData(total_nobkgd_eset_ql_combat), 2)
