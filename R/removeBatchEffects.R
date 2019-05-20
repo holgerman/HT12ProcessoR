@@ -434,7 +434,7 @@
                    Biobase::pData(
                      total_nobkgd_eset_ql
                      )$sampleID %in% good.ids,
-                   ]$sampleID) == F) {
+                   "sampleID"]) == F) {
       stop("Something went wrong - code 33443361")
       }
 
@@ -460,7 +460,7 @@
     ht12object$genesdetail = genesdetail
 
     # individuenattrib
-    sample_overview_l7[sample_overview_l7$in_study & !(sample_overview_l7$new_ID %in% good.ids), ]$reason4exclusion <- "tmp"
+    sample_overview_l7[sample_overview_l7$in_study & !(sample_overview_l7$new_ID %in% good.ids), "reason4exclusion"] <- "tmp"
     sample_overview_l7[!(sample_overview_l7$new_ID %in% good.ids),"in_study"] = F
 
     # don't overwrite the other reason4exclusions
