@@ -1,7 +1,7 @@
 Package: HT12ProcessoR
 Type: Package
 Title: Preprocessing Illuminas HT12 v4 data
-Version: 0.0.18
+Version: 0.0.19
 Date: 2019-05-20
 Author: Holger Kirsten and Carl Beuchel
 Maintainer: Holger Kirsten<holger.kirsten@imise.uni-leipzig.de>
