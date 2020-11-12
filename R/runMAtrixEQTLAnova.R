@@ -59,7 +59,11 @@ runMAtrixEQTLAnova <- function(eset, output_file_name, myesetspalte, mycovarspal
         vgl1_zeile = paste0("anova(lm( gx ~  ", paste(mycovarspalte, collapse = " + "), " + confounder, data=df_vgl1))")
         vgl1 = eval(parse(text = vgl1_zeile))
         vgl1
-        check1 = identical(round(vgl1["confounder", "F value"], 5), round(sentrix_vor_combat_pvals$statistic[4], 5))
+        anova_f1 = vgl1["confounder", "F value"]
+        matrixeqtl_f1 = sentrix_vor_combat_pvals$statistic[4]
+        message('Checking Example 1 F value Anova :', anova_f1)
+        message('Checking Example 1 F value MatrixEQTLS :', matrixeqtl_f1)
+        check1 = identical(round(anova_f1, round4ANOVAcheck), round(matrixeqtl_f1, round4ANOVAcheck))
         # stopifnot(check1 & (is.na(vgl1$`F value`[1])==F))
 
         df_vgl2 = data.frame(gx = ge_vor_combat[sentrix_vor_combat_pvals$gene[nrow(sentrix_vor_combat_pvals)], ], eset_indinfo[, mycovarspalte, with = F], confounder = eset_indinfo[,
@@ -67,12 +71,20 @@ runMAtrixEQTLAnova <- function(eset, output_file_name, myesetspalte, mycovarspal
         vgl2_zeile = paste0("anova(lm( gx ~  ", paste(mycovarspalte, collapse = " + "), " + confounder, data=df_vgl2))")
         vgl2 = eval(parse(text = vgl2_zeile))
         vgl2
-        check2 = identical(round(vgl2["confounder", "F value"], 5), round(sentrix_vor_combat_pvals$statistic[nrow(sentrix_vor_combat_pvals)], 5))
+
+        anova_f2 = vgl2["confounder", "F value"]
+        matrixeqtl_f2 = sentrix_vor_combat_pvals$statistic[nrow(sentrix_vor_combat_pvals)]
+        message('Checking Example 2 F value Anova :', anova_f2)
+        message('Checking Example 2 F value MatrixEQTLS :', matrixeqtl_f2)
+
+        check2 = identical(round(anova_f2, round4ANOVAcheck), round(matrixeqtl_f2, round4ANOVAcheck))
 
         # stopifnot(check2 & (is.na(vgl2$`F value`[2])==F))
 
         if (check1 & (is.na(vgl1$`F value`[1]) == F) & check2 & (is.na(vgl2$`F value`[2]) == F)) {
-            message("For two examples, R ANOVA and MatrixEQTL ANOVA incl. covariate are identical. Great.")
+          message("For two examples, R ANOVA and MatrixEQTL in  ANOVA without Covariate are sufficiently identical (rounding both F values by ",
+                  round4ANOVAcheck, "). Great.")
+
         } else {
 
             message("For two examples, R ANOVA and MatrixEQTL ANOVA incl. covariate were not identical. Rerunning with classical anova")
@@ -112,7 +124,7 @@ runMAtrixEQTLAnova <- function(eset, output_file_name, myesetspalte, mycovarspal
 
         vgl1 = anova(lm(ge_vor_combat[sentrix_vor_combat_pvals$gene[4], ] ~ factor(unlist(eset_indinfo[, myesetspalte, with = F]))))
         vgl1
-        anova_f1 = vgl1$`F value`[1]
+        anova_f1 =vgl1["confounder", "F value"]
         matrixeqtl_f1 = sentrix_vor_combat_pvals$statistic[4]
         check1 = identical(round(anova_f1, round4ANOVAcheck), round(matrixeqtl_f1, round4ANOVAcheck))
         message('Checking Example 1 F value Anova :', anova_f1)
@@ -122,7 +134,7 @@ runMAtrixEQTLAnova <- function(eset, output_file_name, myesetspalte, mycovarspal
         vgl2 = anova(lm(ge_vor_combat[sentrix_vor_combat_pvals$gene[nrow(sentrix_vor_combat_pvals)], ] ~ factor(unlist(eset_indinfo[, myesetspalte, with = F]))))
         vgl2
 
-        anova_f2 = vgl2$`F value`[1]
+        anova_f2 =vgl2["confounder", "F value"]
         matrixeqtl_f2 = sentrix_vor_combat_pvals$statistic[nrow(sentrix_vor_combat_pvals)]
         check2 = identical(round(anova_f2, round4ANOVAcheck), round(matrixeqtl_f2, round4ANOVAcheck))
         message('Checking Example 2 F value Anova :', anova_f2)
