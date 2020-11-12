@@ -4,8 +4,11 @@
 \alias{createExpressionSet}
 \title{Create an expressionset from Illumina HT12v4 data}
 \usage{
-createExpressionSet(ht12object, paramfile = NULL,
-  colseparator = "from_paramfile")
+createExpressionSet(
+  ht12object,
+  paramfile = NULL,
+  colseparator = "from_paramfile"
+)
 }
 \arguments{
 \item{ht12object}{A list object of class HT12prepro created with function checkExtractChipsamples()}

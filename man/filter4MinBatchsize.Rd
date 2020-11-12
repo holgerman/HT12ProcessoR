@@ -4,8 +4,11 @@
 \alias{filter4MinBatchsize}
 \title{Filter samples of a HT12prepro object for min batch size n>1}
 \usage{
-filter4MinBatchsize(ht12object, paramfile = NULL,
-  second_combat_withvar = "from_paramfile")
+filter4MinBatchsize(
+  ht12object,
+  paramfile = NULL,
+  second_combat_withvar = "from_paramfile"
+)
 }
 \arguments{
 \item{ht12object}{A list object of class HT12prepro created with function filterTechnicallyFailed()}

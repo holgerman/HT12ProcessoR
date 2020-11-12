@@ -4,9 +4,12 @@
 \alias{filterLowExpressed}
 \title{Filter samples with atypical number of expressed genes and annotate probes for their expression level}
 \usage{
-filterLowExpressed(ht12object, paramfile = NULL,
+filterLowExpressed(
+  ht12object,
+  paramfile = NULL,
   filter1ind_expressedGenes = "from_paramfile",
-  filter1probes_expressedProbes = "from_paramfile")
+  filter1probes_expressedProbes = "from_paramfile"
+)
 }
 \arguments{
 \item{ht12object}{A list object of class HT12prepro created with function createExpressionSet()}

@@ -4,8 +4,12 @@
 \alias{visualizePreprocessing}
 \title{Visualize expression data before and after preprocessing}
 \usage{
-visualizePreprocessing(ht12object, paramfile = NULL,
-  show_qcplots_individSamplelevel = "from_paramfile", showPlots = T)
+visualizePreprocessing(
+  ht12object,
+  paramfile = NULL,
+  show_qcplots_individSamplelevel = "from_paramfile",
+  showPlots = T
+)
 }
 \arguments{
 \item{ht12object}{A list object of class HT12prepro created with function filterAtypicalExpressed()}

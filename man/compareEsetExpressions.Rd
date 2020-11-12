@@ -4,8 +4,13 @@
 \alias{compareEsetExpressions}
 \title{compareEsetExpressions}
 \usage{
-compareEsetExpressions(all_nobkgd_eset_ql_combat, adjusted_eset,
-  firstmessage = NULL, showPlots = T, compmethod = "spearman")
+compareEsetExpressions(
+  all_nobkgd_eset_ql_combat,
+  adjusted_eset,
+  firstmessage = NULL,
+  showPlots = T,
+  compmethod = "spearman"
+)
 }
 \arguments{
 \item{all_nobkgd_eset_ql_combat}{PARAM_DESCRIPTION}

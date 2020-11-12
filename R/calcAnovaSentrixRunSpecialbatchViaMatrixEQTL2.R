@@ -1,5 +1,5 @@
 calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, total_nobkgd_eset_ql_combat, genesdetail, subgroups, anova_with_special_batch, strangebatch,
-                                                          adjust4subgroup = F) {
+                                                          adjust4subgroup = F, round4ANOVAcheck=5 ) {
 
   ##debug
   # adjust4subgroup = T
@@ -56,11 +56,11 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
       message("Running ANOVA in the form of high-efficient eQTL analysis via package MatrixEQTL ....\n")
       message("Calculating ANOIVA for Sentrix.Barcode before Combat...")
       all_pval_before_sentrix = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql, output_file_name = NULL, myesetspalte = "Sentrix.Barcode",
-                                                   mycovarspalte = "subgroup")
+                                                   mycovarspalte = "subgroup", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_before_sentrix)
       message("Calculating ANOIVA for Sentrix.Barcode after Combat...")
       all_pval_after_sentrix = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql_combat, output_file_name = NULL, myesetspalte = "Sentrix.Barcode",
-                                                  mycovarspalte = "subgroup")
+                                                  mycovarspalte = "subgroup",round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_after_sentrix)
     }
 
@@ -96,12 +96,12 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
     if (n_bigbatch > 2) {
       message("Calculating ANOIVA for Processing Batch (i.e. fileset_id) before Combat...")
       all_pval_before_bigbatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql, output_file_name = NULL, myesetspalte = "bigbatch",
-                                                    mycovarspalte = "subgroup")
+                                                    mycovarspalte = "subgroup", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_before_bigbatch)
 
       message("Calculating ANOIVA for Processing Batch (i.e. fileset_id) after Combat...")
       all_pval_after_bigbatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql_combat, output_file_name = NULL, myesetspalte = "bigbatch",
-                                                   mycovarspalte = "subgroup")
+                                                   mycovarspalte = "subgroup", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_after_bigbatch)
     }
 
@@ -133,11 +133,11 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
     if (n_strangebatch > 2) {
       message("Calculating ANOIVA for userdefined strangebatch before Combat...")
       all_pval_before_strangebatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql, output_file_name = "obj/s08_2_anova_strangebatch_beforeCOMBAT", myesetspalte = "strangebatch",
-                                                        mycovarspalte = "subgroup")
+                                                        mycovarspalte = "subgroup", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_before_strangebatch)
       message("Calculating ANOIVA for userdefined strangebatch after Combat...")
       all_pval_after_strangebatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql_combat, output_file_name = "obj/s08_2_anova_strangebatch_afterCOMBAT", myesetspalte = "strangebatch",
-                                                       mycovarspalte = "subgroup")
+                                                       mycovarspalte = "subgroup", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_after_strangebatch)
     }
 
@@ -164,10 +164,10 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
 
     if (n_sentrix > 2) {
       message("Calculating ANOIVA for Sentrix.Barcode (n_sentrix > 2) before Combat...")
-      all_pval_before_sentrix = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql, output_file_name = NULL, myesetspalte = "Sentrix.Barcode")
+      all_pval_before_sentrix = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql, output_file_name = NULL, myesetspalte = "Sentrix.Barcode", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_before_sentrix)
       message("Calculating ANOIVA for Sentrix.Barcode (n_sentrix > 2) after Combat...")
-      all_pval_after_sentrix = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql_combat, output_file_name = NULL, myesetspalte = "Sentrix.Barcode")
+      all_pval_after_sentrix = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql_combat, output_file_name = NULL, myesetspalte = "Sentrix.Barcode", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_after_sentrix)
     }
 
@@ -191,11 +191,11 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
     }
     if (n_bigbatch > 2) {
       message("Calculating ANOIVA for Processing Batch (i.e. fileset_id, n_fileset_id >2) before Combat...")
-      all_pval_before_bigbatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql, output_file_name =NULL, myesetspalte = "bigbatch")
+      all_pval_before_bigbatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql, output_file_name =NULL, myesetspalte = "bigbatch", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_before_bigbatch)
 
       message("Calculating ANOIVA for Processing Batch (i.e. fileset_id, n_fileset_id >2) after Combat...")
-      all_pval_after_bigbatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql_combat, output_file_name = NULL, myesetspalte = "bigbatch")
+      all_pval_after_bigbatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql_combat, output_file_name = NULL, myesetspalte = "bigbatch", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_after_bigbatch)
     }
 
@@ -218,11 +218,11 @@ calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2 <- function(total_nobkgd_eset_ql, 
     if (n_strangebatch > 2) {
 
       message("Calculating ANOIVA for userdefined strangebatch  (n_strangebatch > 2) before Combat...")
-      all_pval_before_strangebatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql, output_file_name = NULL, myesetspalte = "strangebatch")
+      all_pval_before_strangebatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql, output_file_name = NULL, myesetspalte = "strangebatch", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_before_strangebatch)
 
       message("Calculating ANOIVA for userdefined strangebatch  (n_strangebatch > 2) after Combat...")
-      all_pval_after_strangebatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql_combat, output_file_name = NULL, myesetspalte = "strangebatch")
+      all_pval_after_strangebatch = runMAtrixEQTLAnova(eset = total_nobkgd_eset_ql_combat, output_file_name = NULL, myesetspalte = "strangebatch", round4ANOVAcheck = round4ANOVAcheck)
       # str(all_pval_after_strangebatch)
     }
   }

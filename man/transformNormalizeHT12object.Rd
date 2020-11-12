@@ -4,8 +4,12 @@
 \alias{transformNormalizeHT12object}
 \title{Normalize and transform expression sets included in a HT12prepro object}
 \usage{
-transformNormalizeHT12object(ht12object, paramfile = NULL,
-  normalisation_method = "from_paramfile", fn_plot = NULL)
+transformNormalizeHT12object(
+  ht12object,
+  paramfile = NULL,
+  normalisation_method = "from_paramfile",
+  fn_plot = NULL
+)
 }
 \arguments{
 \item{ht12object}{A list object of class HT12prepro created with function createExpressionSet()}

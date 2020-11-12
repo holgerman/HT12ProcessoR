@@ -4,7 +4,9 @@
 \alias{writeFilesTosend}
 \title{Writes File used for follow up analyses in a folder}
 \usage{
-writeFilesTosend(ht12object, paramfile = NULL,
+writeFilesTosend(
+  ht12object,
+  paramfile = NULL,
   file_sampleannot_final.txt = "from_paramfile",
   file_probeannot_final.txt = "from_paramfile",
   file_annot_final.xlsx = "from_paramfile",
@@ -12,7 +14,8 @@ writeFilesTosend(ht12object, paramfile = NULL,
   file_final_expression_matrix = "from_paramfile",
   file_all_transcripts_good_incl_remapping_ok = "from_paramfile",
   file_final_expression_matrix_allProbes.txt = "from_paramfile",
-  file_renaming_samples_tosend = "from_paramfile")
+  file_renaming_samples_tosend = "from_paramfile"
+)
 }
 \arguments{
 \item{ht12object}{A list object of class HT12prepro created with function checkExtractChipsamples}

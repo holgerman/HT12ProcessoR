@@ -4,12 +4,16 @@
 \alias{removeBatchEffects}
 \title{Remove Batch effects from expressoin data of a HT12prepro object}
 \usage{
-removeBatchEffects(ht12object, paramfile = NULL,
-  excludeERCC = "from_paramfile", save_subgroupcontrast = "from_paramfile",
+removeBatchEffects(
+  ht12object,
+  paramfile = NULL,
+  excludeERCC = "from_paramfile",
+  save_subgroupcontrast = "from_paramfile",
   second_combat_withvar = "from_paramfile",
   additional_normalisation_after_combat = "from_paramfile",
   normalisation_method = "from_paramfile",
-  showPlot_additional_normalisation_after_combat = T)
+  showPlot_additional_normalisation_after_combat = T
+)
 }
 \arguments{
 \item{ht12object}{A list object of class HT12prepro created with function filter4MinBatchsize}

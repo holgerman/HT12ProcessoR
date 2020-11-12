@@ -4,10 +4,13 @@
 \alias{checkExtractChipsamples}
 \title{Check Illumina HT12v4 expression data}
 \usage{
-checkExtractChipsamples(paramfile = NULL,
+checkExtractChipsamples(
+  paramfile = NULL,
   file_names_of_files_and_folders = "from_paramfile",
-  colseparator = "from_paramfile", renameDublettes = "from_paramfile",
-  prefix_new_samplename = "from_paramfile")
+  colseparator = "from_paramfile",
+  renameDublettes = "from_paramfile",
+  prefix_new_samplename = "from_paramfile"
+)
 }
 \arguments{
 \item{paramfile}{Path to the file specifying preprocessing parameters, can be NULL}

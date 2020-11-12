@@ -4,6 +4,7 @@
 
 #' @param ht12object A list object of class HT12prepro created with function removeBatchEffects()
 #' @param paramfile Path to the file specifying parameters
+#' @param round4ANOVAcheck parameter for control how identical Results of MATRIXEQTL and standard ANova have to be. Provided number rounds the F statistic value. Applied in function runMAtrixEQTLAnova called by calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2() . Note that slightly different results may occur  when e.g. using two completely nested covariates
 #' @return A list object of class HT12prepro where  the slot with  probe-related attributes of the current processing-stage named `$genesdetail` is updated as well as the  slot with the history of the commands named `$history`.  QQ plots of the association are shown.
 #' @import data.table
 #' @export
@@ -15,7 +16,7 @@
 
 
 
-checkBatchEffects = function(ht12object,paramfile = NULL, showPlots=T) {
+checkBatchEffects = function(ht12object,paramfile = NULL, showPlots=T,round4ANOVAcheck = 5) {
 
 ### strings are imported as strings and not as factors
   options(stringsAsFactors=FALSE)
@@ -138,7 +139,9 @@ anovres <- calcAnovaSentrixRunSpecialbatchViaMatrixEQTL2(total_nobkgd_eset_ql,
                                                          subgroups,
                                                          anova_with_special_batch,
                                                          strangebatch,
-                                                         adjust4subgroup = (n_subgroups>1))
+                                                         adjust4subgroup = (n_subgroups>1),
+                                                         round4ANOVAcheck = round4ANOVAcheck
+                                                         )
 genesdetail <- anovres$genesdetail
 ht(genesdetail, 2)
 bonf_pwert <- anovres$bonf_pwert

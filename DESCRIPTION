@@ -1,12 +1,13 @@
 Package: HT12ProcessoR
 Type: Package
 Title: Preprocessing Illuminas HT12 v4 data
-Version: 0.0.17
+Version: 0.0.18
 Date: 2019-05-20
 Author: Holger Kirsten and Carl Beuchel
 Maintainer: Holger Kirsten<holger.kirsten@imise.uni-leipzig.de>
 Description: Preprocessing ILLUMINA HT12v4 data intented for project up to thousands of samples
 License: GPL (>= 2)
+Encoding: UTF-8
 Imports:
     knitr,
     dplyr,
@@ -40,7 +41,8 @@ Suggests:
     knitr,
     rmarkdown
 Depends:
-    data.table
+    data.table,
+    R (>= 2.10)
 VignetteBuilder: knitr
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 7.1.1

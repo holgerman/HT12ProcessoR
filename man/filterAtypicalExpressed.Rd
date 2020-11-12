@@ -4,8 +4,11 @@
 \alias{filterAtypicalExpressed}
 \title{Filter samples with atypical expressoin data}
 \usage{
-filterAtypicalExpressed(ht12object, paramfile = NULL,
-  filter2ind_atypischEuklid = "from_paramfile")
+filterAtypicalExpressed(
+  ht12object,
+  paramfile = NULL,
+  filter2ind_atypischEuklid = "from_paramfile"
+)
 }
 \arguments{
 \item{ht12object}{A list object of class HT12prepro created with function checkBatchEffects()}

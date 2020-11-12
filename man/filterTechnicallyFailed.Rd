@@ -4,10 +4,14 @@
 \alias{filterTechnicallyFailed}
 \title{Identify and filter samples with unusual combination of control probes in a HT12prepro object}
 \usage{
-filterTechnicallyFailed(ht12object, paramfile = NULL,
+filterTechnicallyFailed(
+  ht12object,
+  paramfile = NULL,
   filter2ind_atypischIlmnKontroll = "from_paramfile",
+  eset2use = "total_nobkgd_eset_ql",
   controlparameters2check = "from_paramfile",
-  robustmethod_for_mahal = "from_paramfile")
+  robustmethod_for_mahal = "from_paramfile"
+)
 }
 \arguments{
 \item{ht12object}{A list object of class HT12prepro created with function transformNormalizeHT12object()}
@@ -15,6 +19,8 @@ filterTechnicallyFailed(ht12object, paramfile = NULL,
 \item{paramfile}{Path to the file specifying parameters}
 
 \item{filter2ind_atypischIlmnKontroll}{Filter for extreme combination of Illuminas control features summarized as Mahalanobis distance to an artificial sample. This artificial sample having has average values for the selected quality control features. Valid is ln('Mahalanobis distance') < median(ln('Mahalanobis distance')) + [value] *  IQR(ln('Mahalanobis distance')). If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.}
+
+\item{eset2use}{Shall the analysis based on transformed/normalized data, use "total_nobkgd_eset_ql" (default), shall the batch-adjusted data be used, use   total_nobkgd_eset_ql_combat}
 
 \item{controlparameters2check}{Illuminas control features used for calculation of the Mahalanobis distance based outlyer criterium. Default ist 'hybrid_low, hybrid_med,  string_pm, string_mm, biotin, negative' (if spiked in erccc is used in ALL CHIPS use also 'ercc_1, ercc_2, ercc_3, ercc_4, ercc_5', if spked in artificial polyadenylated RNAs from Bacillus subtilis immediately preceding the reverse transcription step is used, also 'labeling'). In case of population based studies within a single tissue default is also 'housekeeping, Detected.Genes..0.01.'.  If "from_paramfile", than the parameter will be read from the paramfile with the location of this file given in parameter paramfile.}
 
