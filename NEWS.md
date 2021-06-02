@@ -8,3 +8,6 @@
 
 # HT12ProcessoR 0.0.19
  * fix runMAtrixEQTLAnova()
+
+# HT12ProcessoR 0.0.20
+ * fix writeFilesTosend() to allow when a subgroup is always sampleinfo$in_study = F
