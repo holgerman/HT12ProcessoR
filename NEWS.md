@@ -11,3 +11,6 @@
 
 # HT12ProcessoR 0.0.20
  * fix writeFilesTosend() to allow when a subgroup is always sampleinfo$in_study = F
+
+# HT12ProcessoR 0.0.21
+ * making fix writeFilesTosend() save for data.table and data.frame
