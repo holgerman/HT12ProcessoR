@@ -294,7 +294,7 @@ relcolsprobe
 
 probeannot <- probeannot[,relcolsprobe]
 #for(mysubgroup in unique(sampleinfo$subgroup )) {
-  for (mysubgroup in unique(sampleinfo[sampleinfo$in_study==T, "subgroup"])) { # hier fehler 2.6.21 weil subgroup control niemals in_study =T war  
+  for (mysubgroup in unique(sampleinfo$subgroup[sampleinfo$in_study==T])) { # hier fehler 2.6.21 weil subgroup control niemals in_study =T war  
   # mysubgroup = unique(sampleinfo$subgroup )[1]
   newvar <- paste('perfectprobe', mysubgroup, sep = "_")
   probeannot$tempvar <- probeannot[, paste0("goodexpressedprobe_",mysubgroup)] &
